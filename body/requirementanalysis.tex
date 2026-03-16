@@ -3,43 +3,219 @@
 
 \section{Stakeholder Analysis}
 \label{section:stakeholder-analysis}
-<TIP: List your stakeholders for your project here/>
 
-Stakeholders are individuals, groups, or entities that
-have an interest, concern, or stake in a particular project, decision,
-organization, or system. These are individuals or groups who can affect or be
-affected by the outcomes of your project.
+Stakeholders are individuals, groups, or entities that have an interest, concern, or stake in the KUru system --- they can affect or be affected by the system's outputs and operation. Four primary stakeholders have been identified:
 
+\begin{table}[htbp]
+\centering
+\small
+\renewcommand{\arraystretch}{1.4}
+\caption{Stakeholder Analysis}
+\begin{tabularx}{\textwidth}{|p{3cm}|X|X|}
+\hline
+\textbf{Stakeholder} & \textbf{Role / Interest} & \textbf{Concern / Impact} \\
+\hline
+KU CPE / SKE Students (Year 1--4) &
+    Primary users of all five features. They interact with the chatbot, explore PLOs, assess their skills, and generate learning paths. &
+    Accuracy of AI answers, usefulness of career recommendations, relevance of learning paths, and data privacy of self-assessment scores. \\
+\hline
+Faculty Advisor &
+    Provides the official มคอ.2 document, reviews and approves PLO-to-skill mappings in the knowledge graph, and validates the 50-question evaluation test set. &
+    Accuracy of extracted PLO data, correctness of skill taxonomy, and integrity of the knowledge graph before student-facing deployment. \\
+\hline
+Department of Computer Engineering, KU &
+    Institutional owner of the curriculum. Benefits from a system that improves student curriculum engagement and supports OBE accreditation evidence. &
+    PDPA compliance, data security, reputational risk from incorrect AI-generated curriculum information. \\
+\hline
+Development Team (Project Authors) &
+    Responsible for designing, building, testing, and deploying the system within the 4-month project timeline. &
+    Technical feasibility, API cost management within free tiers, meeting the 80\% accuracy target on time. \\
+\hline
+\end{tabularx}
+\end{table}
 
 \section{User Stories and Use Cases}
 \label{section:user-stories-use-cases}
-<TIP: For each stakeholder, write user stories that capture what
-they need from the system: "As a [stakeholder], I want to [action] so that [benefit]."
-For your most important user stories, expand them into use cases.
-A use case is a detailed description of how a system
-interacts with an external entity (such as a user or another system) to
-accomplish a specific goal. Use cases provide a high-level view of the
-functionality of a system and help in capturing and documenting its
-requirements from the perspective of end users.
 
-Make sure to use the
-appropriate type of use case for each scenario (brief, casual, and fully-dressed
-use case). />
+User stories capture what each stakeholder needs from the system. The most critical user stories are expanded into use cases in Section~\ref{subsection:key-use-cases}.
 
-\section{Use Case Diagrams}
+\subsection{Student User Stories}
+\label{subsection:student-user-stories}
+
+\begin{itemize}[leftmargin=80pt]
+    \item As a first-year student, I want to ask what PLO3 means in plain language, so that I understand what skills I am expected to develop during my degree.
+
+    \item As a third-year student, I want to see which skills I currently lack compared to the Software Developer career requirements, so that I can choose electives that close those gaps.
+
+    \item As a final-year student, I want to generate a personalised learning path toward my target career, so that I can identify and address any remaining skill gaps before graduation.
+
+    \item As a student, I want every chatbot answer to cite the specific มคอ.2 page it came from, so that I can verify the information myself.
+
+    \item As a student, I want to update my self-assessment skill scores and see my radar chart update immediately, so that I can track my progress over time.
+\end{itemize}
+
+\subsection{Faculty Advisor User Stories}
+\label{subsection:advisor-user-stories}
+
+\begin{itemize}[leftmargin=80pt]
+    \item As a faculty advisor, I want to review and approve the PLO-to-skill mappings before they are made available to students, so that I can ensure the knowledge graph reflects the intended curriculum design.
+
+    \item As a faculty advisor, I want to validate the 50-question chatbot test set so that the accuracy evaluation reflects real curriculum questions that students would ask.
+\end{itemize}
+
+\subsection{Key Use Cases}
+\label{subsection:key-use-cases}
+
+\noindent\textbf{UC-01: Ask a Curriculum Question (Chatbot)}
+
+\noindent\textit{Actor:} Student
+
+\noindent\textit{Precondition:} มคอ.2 document has been ingested and indexed in pgvector.
+
+\noindent\textit{Main Flow:}
+\begin{enumerate}[leftmargin=80pt]
+    \item Student enters a question in Thai or English in the chat interface.
+    \item System embeds the query using Gemini text-embedding-004.
+    \item System retrieves the top-5 most semantically relevant curriculum chunks from pgvector.
+    \item System passes the chunks and question to Gemini 2.5 Flash with a strict citation instruction.
+    \item System displays the generated answer with an inline มคอ.2 page citation badge.
+\end{enumerate}
+
+\noindent\textit{Alternative Flow:} If no relevant chunk is found, the system responds: ``This information was not found in the curriculum document.''
+
+\noindent\textit{Postcondition:} Student has received a cited answer grounded in the official curriculum document.
+
+\vspace{1ex}
+\noindent\textbf{UC-02: Explore a PLO in Plain Language}
+
+\noindent\textit{Actor:} Student
+
+\noindent\textit{Precondition:} PLO data has been extracted and stored in Supabase and Neo4j.
+
+\noindent\textit{Main Flow:}
+\begin{enumerate}[leftmargin=80pt]
+    \item Student navigates to the PLO Explainer page.
+    \item Student selects a PLO (e.g., PLO3) from the list.
+    \item System retrieves the PLO record from Supabase and the associated skills from Neo4j.
+    \item System displays: (a) a one-sentence plain-language summary, (b) a concrete real-world example, (c) the original Thai text with page reference, and (d) the linked skill nodes.
+\end{enumerate}
+
+\noindent\textit{Postcondition:} Student understands what the PLO means in practical terms and what skills it requires.
+
+\vspace{1ex}
+\noindent\textbf{UC-03: View Skill Map and Gap Analysis}
+
+\noindent\textit{Actor:} Student
+
+\noindent\textit{Precondition:} Student has a profile in the system; skill taxonomy and PLO-to-skill mappings are stored in Neo4j.
+
+\noindent\textit{Main Flow:}
+\begin{enumerate}[leftmargin=80pt]
+    \item Student navigates to the Skill Map page.
+    \item Student adjusts sliders to self-assess current skill levels across 16 skills.
+    \item System calculates gaps between self-assessed levels and program target levels from Neo4j.
+    \item System renders a radar chart showing current vs.\ target skill levels.
+    \item System highlights the 2--3 most critical skill gaps with suggested courses to address each.
+\end{enumerate}
+
+\noindent\textit{Postcondition:} Student has a visual understanding of where their skill profile stands relative to program targets.
+
+\vspace{1ex}
+\noindent\textbf{UC-04: Get Career Match Recommendations}
+
+\noindent\textit{Actor:} Student
+
+\noindent\textit{Precondition:} Student skill levels have been set (via self-assessment); career dictionary and skill requirements are stored in Neo4j.
+
+\noindent\textit{Main Flow:}
+\begin{enumerate}[leftmargin=80pt]
+    \item Student navigates to the Career Match page.
+    \item System queries Neo4j to compute a match percentage for each career role based on the student's current skill levels.
+    \item System ranks and displays the top 3--5 career matches with: (a) match percentage, (b) skills that already meet career requirements, and (c) specific skills still needed.
+    \item Student can click any career card to see a Gemini-generated plain-language explanation of the recommendation.
+\end{enumerate}
+
+\noindent\textit{Postcondition:} Student understands which careers they are most aligned with and exactly what skills they need to develop to reach their target career.
+
+\vspace{1ex}
+\noindent\textbf{UC-05: Generate a Personalised Learning Path}
+
+\noindent\textit{Actor:} Student
+
+\noindent\textit{Precondition:} Career Match has been viewed; student has selected a target career.
+
+\noindent\textit{Main Flow:}
+\begin{enumerate}[leftmargin=80pt]
+    \item Student selects a target career from the Career Match page.
+    \item System queries Neo4j for the skill gaps between the student's current levels and the career's required levels.
+    \item System generates an ordered list of recommended courses, electives, and activities that close each gap.
+    \item Each step is tagged with the PLO it addresses, so the student can see how each action connects back to the curriculum's intended outcomes.
+    \item Student can click ``Generate with AI'' to receive a Gemini-generated personalised narrative path.
+\end{enumerate}
+
+\noindent\textit{Postcondition:} Student has an actionable, ordered roadmap from their current skill profile to their target career.
+
+\section{Use Case Diagram}
 \label{section:use-case-diagrams}
-<TIP: Include a UML Use Case Diagram that shows all actors and
-their relationships to the use cases you described.
-Also provide the written description for each use case. />
+
+The use case diagram below illustrates all actors and their relationships to the five primary use cases of the KUru system. The Student actor interacts with all five features directly. The Faculty Advisor actor interacts with the system during the data preparation and validation phase (pre-deployment) rather than through the student-facing UI.
+
+\begin{table}[htbp]
+\centering
+\small
+\renewcommand{\arraystretch}{1.4}
+\caption{Use Case Diagram (Schematic)}
+\begin{tabularx}{\textwidth}{|p{2.5cm}|X|p{3.5cm}|}
+\hline
+\textit{«Actor»} \textbf{Student} &
+    UC-01 Ask a Curriculum Question (Chatbot) \newline
+    UC-02 Explore PLO in Plain Language \newline
+    UC-03 View Skill Map and Gap Analysis \newline
+    UC-04 Get Career Match Recommendations \newline
+    UC-05 Generate Personalised Learning Path &
+    \textit{«Actor»} \textbf{Faculty Advisor} \newline
+    UC-06 Review \& Approve PLO--Skill Mappings \\
+\hline
+\multicolumn{3}{|l|}{\textbf{KUru System}} \\
+\hline
+\end{tabularx}
+\end{table}
+
+\noindent\textit{Note: A formal UML diagram will be produced using draw.io and included in the final submission.}
 
 \section{User Interface Design}
 \label{section:user-interface-design}
-<TIP: Put the initial design of your application here. You can
-showcase a detailed design of a specific page or a sitemap of your application.
-See an example below./>
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.8\textwidth]{examples/user-interface-design.png}
-    \caption{User Interface Design}
-\end{figure}
+KUru's interface follows a single-page application pattern with a persistent left navigation sidebar and a main content area. The design prioritises clarity and information density appropriate for academic users. The interface was prototyped as an interactive AI-powered mock (built with Next.js components) and validated with five KU CPE students during the requirements phase.
+
+\subsection{Navigation Structure}
+\label{subsection:navigation-structure}
+
+The application is divided into five primary screens, accessible via the sidebar:
+
+\begin{enumerate}[leftmargin=80pt]
+    \item \textbf{Curriculum Chatbot:} Conversational interface with quick-chip suggested questions, chat history, and inline citation badges on every AI response.
+
+    \item \textbf{PLO Explainer:} Grid of PLO cards, each expandable to reveal plain-language summary, real-world example, original Thai text, and linked skill pills.
+
+    \item \textbf{Skill Map:} Split view with a radar chart on the left and skill sliders with gap badges on the right. Updates in real time as sliders are adjusted.
+
+    \item \textbf{Career Match:} Grid of career cards showing match percentage bar, explanation, and skill gap list. Each card has an AI explain button powered by Gemini.
+
+    \item \textbf{Learning Path:} Dropdown to select a target career, followed by a vertical timeline of recommended courses tagged with PLOs. ``Generate with AI'' button produces a Gemini-narrated personalised path.
+\end{enumerate}
+
+\subsection{Key UI Design Decisions}
+\label{subsection:ui-design-decisions}
+
+\begin{itemize}[leftmargin=80pt]
+    \item \textbf{Citation as first-class UI element:} Every chatbot answer displays the มคอ.2 page citation as a highlighted badge (amber background) inline with the answer text --- not in a footnote --- making source verification immediately visible.
+
+    \item \textbf{Radar chart with real-time updates:} The skill radar chart re-renders on every slider change rather than on form submission, giving students immediate visual feedback and encouraging exploration.
+
+    \item \textbf{Explainability over opacity:} Career match percentages are always accompanied by a breakdown of which skills already meet requirements and which do not. A percentage alone is never displayed without its explanation.
+
+    \item \textbf{Bilingual support:} All chatbot interactions accept Thai and English input. The system detects the language of the query and responds in the same language.
+
+    \item \textbf{Progressive disclosure in PLO Explainer:} PLO cards show only the title and skill pills by default. The full three-layer explanation is revealed on click, preventing information overload for first-year students while providing depth for advanced users.
+\end{itemize}

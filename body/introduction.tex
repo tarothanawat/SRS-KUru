@@ -4,80 +4,99 @@
 \section{Background}
 \label{section:background}
 
-<TIP: 
-A background chapter in a book serves the purpose of providing essential context, information, or history that is relevant
-to the overall understanding of the book's subject matter. This chapter typically appears early in the book and aims to set the
-stage for the reader by offering background details that are crucial for comprehending the main narrative.
-/>
+Higher education institutions design their degree programs around Program Learning Outcomes (PLOs) --- formally defined statements that describe the knowledge, skills, and competencies that graduates of a program are expected to demonstrate. In Thailand, these outcomes are mandated and documented through the Thai Qualifications Framework for Higher Education (TQF), with the มคอ.2 document serving as the official curriculum specification for each program.
+
+Despite the critical role PLOs play in shaping the educational journey of every student, there is a persistent and well-documented gap between the curriculum as designed and the curriculum as understood by students. The มคอ.2 document is written in formal academic Thai, structured to satisfy accreditation bodies, and rarely read by the students it is intended to benefit. As a result, students frequently progress through their degree without a clear understanding of what competencies they are building, what careers those competencies prepare them for, or what skills they still lack.
+
+Recent advances in Large Language Models (LLMs) and Retrieval-Augmented Generation (RAG) have created a new opportunity to bridge this gap. RAG architectures enable AI systems to answer questions grounded in specific documents with source citations, overcoming the hallucination problem of general-purpose LLMs. Combined with graph-based knowledge representations, these technologies make it possible to build systems that not only explain curriculum content in plain language, but also map that content to skills and career outcomes in a transparent and explainable way.
+
+KUru (KU Curriculum Understanding) is a web-based application built on this foundation. It processes the official KU มคอ.2 document and transforms it into an interactive platform where students can query the curriculum, explore their PLOs, visualize skill gaps, and receive personalized career and learning path recommendations --- all grounded in the official curriculum document.
 
 \section{Problem Statement}
 \label{section:problem-statement}
 
-<TIP: 
-A problem statement refers to a clear central issue,
-challenge, or question that the project aims to address or explore. It is a
-declaration that highlights the specific problem the author intends to examine,
-discuss, or solve throughout the course of the project.
-/>
+Within the Kasetsart University Computer Engineering program, three interconnected problems consistently affect student outcomes:
+
+\begin{itemize}[leftmargin=80pt]
+    \item \textbf{PLO language is inaccessible.} The formal Thai used in มคอ.2 is written for accreditation reviewers, not students. First-year students entering the program cannot interpret what PLO3 or PLO7 means in terms of skills they should develop or evidence they should produce.
+
+    \item \textbf{The connection between courses, skills, and careers is invisible.} Students select electives and plan their academic trajectory without a data-driven understanding of how each course contributes to their skill profile or moves them toward a specific career.
+
+    \item \textbf{Career planning is reactive rather than intentional.} Without a personal skill-gap analysis, students entering the job market or internship applications are unable to articulate which PLOs they have achieved or identify what specific skills they still need to develop.
+\end{itemize}
+
+These problems are not unique to KU --- they reflect a structural limitation of outcome-based education documentation across Thai higher education --- but KU provides a concrete and well-scoped context in which to address them.
 
 \section{Solution Overview}
 \label{section:solution-overview}
 
-<TIP: 
-A software solution overview provides a high-level and
-concise description of a software product or system. It serves as an
-introduction to the software, offering a glimpse into its key features,
-functionalities, and the problems it aims to address. This overview is often
-presented in documentation, marketing materials, or other communication
-channels to give stakeholders, potential users, or decision-makers a quick
-understanding of what the software does and why it is valuable.
-/>
+KUru transforms the static มคอ.2 curriculum document into an intelligent, interactive platform through two complementary AI architectures working in tandem.
+
+The first is a Retrieval-Augmented Generation (RAG) pipeline. The มคอ.2 document is ingested, chunked by section, and indexed as semantic vector embeddings in a pgvector database using the Gemini text-embedding-004 model. When a student asks a question, the system retrieves the most semantically relevant curriculum passages and passes them to Gemini 2.5 Flash to generate a cited, plain-language answer. Every response is grounded in the official document --- the system cannot answer from general knowledge, and any unanswerable question is explicitly flagged.
+
+The second is a PLO--Skill--Career knowledge graph stored in Neo4j. All eight PLOs are extracted from the document and mapped to a 16-skill taxonomy and a career dictionary with advisor approval. This graph enables deterministic, explainable career matching and learning path generation through Cypher graph traversal.
+
+The system is deployed as a Next.js web application with a FastAPI backend, accessible to all KU students at a public URL at no cost.
 
 \subsection{Features}
 \label{subsection:features}
 
 \begin{enumerate}[leftmargin=80pt]
-    \item Feature Name: Short Description of Feature
-    \item Feature Name: Short Description of Feature
+    \item \textbf{Curriculum Q\&A Chatbot:} A RAG-powered chatbot that answers student questions about the KU curriculum in Thai or English, with every response citing the relevant มคอ.2 page and section.
+
+    \item \textbf{PLO Explainer:} Each PLO is presented in three layers --- a plain-language summary, a real-world example, and the original Thai text with page reference --- alongside the skills it requires and the courses that address it.
+
+    \item \textbf{Skill Map and Gap Analysis:} A radar chart that visualises the student's self-assessed skill levels across 16 skills in four categories against the program's target levels, with a prioritised gap analysis.
+
+    \item \textbf{Career Match Engine:} Graph-based career recommendations showing match percentage, skill alignment, and specific gaps for each recommended career role.
+
+    \item \textbf{Learning Path Generator:} A personalised, ordered sequence of courses, electives, and activities that close the student's skill gaps toward a chosen career target, with each step tagged to the PLOs it addresses.
 \end{enumerate}
 
 \section{Target User}
 \label{section:target-user}
 
-<TIP: 
-The target user in a software project refers to the specific
-group or demographic of individuals for whom the software is designed and
-developed. Identifying the target user is a crucial step in the software
-development process as it helps the development team tailor the software to
-meet the needs, preferences, and requirements of that particular user group.
-Understanding the characteristics, behaviors, and expectations of the target
-users is essential for creating a user-friendly and effective software solution.
+KUru is designed for students enrolled in the Software and Knowledge Engineering (SKE) track within the Department of Computer Engineering at Kasetsart University. Four user personas capture the range of use cases:
 
-Here are some key aspects related to defining the target user in a software project:
+\begin{itemize}[leftmargin=80pt]
+    \item \textbf{First-year students (Year 1):} who have just entered the program and need to understand what their PLOs mean in practical terms and what skills they are expected to develop across their degree.
 
-Demographics: This includes factors such as age, gender,
-occupation, education level, and other demographic characteristics. Different
-age groups or professional backgrounds may have distinct preferences and
-requirements when it comes to software usability.
+    \item \textbf{Mid-program students (Year 2--3):} who are selecting electives and planning internship applications, and need to align their course choices with a specific career target.
 
-Skill Level: Consideration of the users' technical proficiency and
-familiarity with similar software or technology. The level of technical expertise
-can influence the complexity of the user interface, the need for tutorials or
-documentation, and other user support features.
+    \item \textbf{Final-year students (Year 4):} who are preparing for job applications and need to translate their academic experience into career-ready evidence, and identify any remaining skill gaps before graduation.
 
-Industry or Domain: For software solutions designed for specific
-industries or domains, understanding the unique challenges, workflows, and
-terminology within that industry is crucial. Tailoring the software to meet
-industry-specific needs is often necessary.
-/>
+    \item \textbf{Faculty advisors:} who can use the system's aggregated skill data (post-MVP) to identify which PLOs students are systematically underachieving across the cohort.
+\end{itemize}
 
 \section{Terminology}
 \label{section:terminology}
 
-<TIP: 
-Terminology refers to the specific language, jargon, or
-specialized vocabulary used to describe concepts, ideas, or subjects within a
-particular field or domain. The use of terminology is often essential for clarity
-and precision, especially in books that cover technical, scientific, academic, or
-specialized topics.
-/>
+\begin{table}[htbp]
+\centering
+\small
+\renewcommand{\arraystretch}{1.4}
+\caption{Terminology}
+\begin{tabularx}{\textwidth}{|p{3cm}|X|}
+\hline
+\textbf{Term} & \textbf{Definition} \\
+\hline
+มคอ.2 (TQF2) & Thai Qualifications Framework Level 2 document --- the official curriculum specification required by Thailand's Office of the Higher Education Commission. \\
+\hline
+PLO & Program Learning Outcome --- a formally defined statement describing the knowledge, skills, or competency that a graduate of a program is expected to demonstrate. \\
+\hline
+RAG & Retrieval-Augmented Generation --- an AI architecture combining semantic document retrieval with LLM generation, ensuring answers are grounded in a specific knowledge source. \\
+\hline
+Knowledge Graph (KG) & A structured data model that represents entities (PLOs, skills, careers) as nodes and their relationships as edges, enabling semantic queries and graph traversal. \\
+\hline
+pgvector & A PostgreSQL extension that stores and queries high-dimensional vector embeddings, enabling semantic similarity search within the Supabase relational database. \\
+\hline
+Skill Gap & The difference between a student's current self-assessed skill level and the target skill level required by a specific PLO or career role. \\
+\hline
+BM25 & Best Match 25 --- a classical keyword-based relevance ranking function used as the baseline retrieval method for comparison against the RAG semantic search approach. \\
+\hline
+Cypher & The declarative query language used to interact with Neo4j graph databases, used in KUru to traverse PLO--Skill--Career relationships. \\
+\hline
+Neo4j & An open-source graph database management system used to store and query the PLO--Skill--Career knowledge graph in KUru, self-hosted on Railway. \\
+\hline
+\end{tabularx}
+\end{table}

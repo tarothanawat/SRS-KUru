@@ -3,9 +3,11 @@
 \usepackage{skesrsstyles}  % use styles from SKE SRS
 
 % Add third-party packages
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage{mathptmx}  % Times New Roman font package
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\newfontfamily\thaifont{TH Sarabun New}[Scale=MatchLowercase]
+\usepackage{ucharclasses}
+\setTransitionsFor{Thai}{\thaifont}{\normalfont}
 \usepackage[hidelinks]{hyperref}  % Allows hyperlink text in built document
 \usepackage{url}  % Allows url line breaks
 \usepackage{microtype}  % For hyphen-letterspacing configuration
@@ -23,14 +25,14 @@
 
 %% -----------------------------------
 % Edit the variables for the paper here!
-\def \srsTitle{Project Title}
-\def \srsAuthorOne{Name Surname}
-\def \srsAuthorTwo{Name Surname}
-\def \srsAuthorThree{Name Surname}
-\def \srsAcademicYear{YYYY}
+\def \srsTitle{KUru: RAG-Based Curriculum Understanding System}
+\def \srsAuthorOne{Thanawat Tantijaroensin 6610545294}
+\def \srsAuthorTwo{Phantawat Luengsiriwattana 6610545871}
+\def \srsAuthorThree{}
+\def \srsAcademicYear{2568}
 
-\def \srsAdvisorName{Project Advisor's Name}
-\def \srsCoAdvisorName{Project Co-Advisor's Name}
+\def \srsAdvisorName{Jitti Niramitranon}
+\def \srsCoAdvisorName{}
 \def \srsHoDName{Head of Department's Name}
 %% -----------------------------------
 

@@ -4,26 +4,99 @@
 \section{Competitor Analysis}
 \label{section:competitor-analysis}
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.5\textwidth]{examples/asana-competitive-landscape.jpg}
-    \caption{Competitive Landscape by Asana}
-\end{figure}
+Several existing systems address parts of the problem that KUru targets. The following analysis compares four relevant platforms across the dimensions most critical to KUru's value proposition: document grounding, PLO-specific support, skill gap analysis, career matching, and Thai language capability.
 
-<TIP: 
-Refer to an article "How to create a competitive analysis (with
-examples)" by Asana. You can use the Competitor Landscape or
-Competitor Analysis Framework for your project.
-/>
+\begin{table}[htbp]
+\centering
+\small
+\renewcommand{\arraystretch}{1.4}
+\caption{Competitor Analysis}
+\begin{tabularx}{\textwidth}{|p{2.5cm}|X|X|X|X|X|}
+\hline
+\textbf{Feature} & \textbf{KUru (Proposed)} & \textbf{Knowva (KMITL)} & \textbf{ChulaGENIE (Chula)} & \textbf{General ChatGPT} & \textbf{Static มคอ.2 PDF} \\
+\hline
+มคอ.2 grounding & RAG + citations & Partial --- admission only & No --- general LLM & No --- hallucination risk & Raw text only \\
+\hline
+PLO plain-language explanation & Yes --- structured layers & No & No & Partial --- unpredictable & No \\
+\hline
+Skill gap analysis & Yes --- radar chart & No & No & No & No \\
+\hline
+Career match engine & Yes --- graph-based, explainable & Partial --- general advice & No & No & No \\
+\hline
+Learning path generator & Yes --- per student & No & No & No & No \\
+\hline
+Page-level citations & Yes --- every answer & Unknown & No & No & N/A --- static \\
+\hline
+Thai language support & Yes --- Gemini native & Yes --- Claude on AWS & Yes --- Gemini multilingual & Partial & Yes --- static text \\
+\hline
+Specific to KU SKE curriculum & Yes & No --- KMITL only & No --- Chula only & No & Yes --- raw document \\
+\hline
+\end{tabularx}
+\end{table}
+
+\subsection{Knowva (KMITL)}
+\label{subsection:knowva}
+
+Knowva is a generative AI virtual assistant developed by King Mongkut's Institute of Technology Ladkrabang (KMITL) in partnership with Amazon Web Services and DailiTech Co., Ltd., powered by Amazon Bedrock using Anthropic Claude \cite{aws2025kmitl}. The system was designed specifically to answer prospective student queries about program information, admission processes, degree requirements, and career prospects. Following its launch, Knowva handled over 6,000 student inquiries during an educational exhibition and achieved a 60 percent increase in student satisfaction compared to the previous year.
+
+Knowva is the closest Thai university AI system to KUru in purpose, but differs in scope and depth. Knowva targets prospective students seeking admission information, not enrolled students navigating PLO-to-career pathways. It does not provide skill gap analysis, radar charts, or personalized learning path generation. KUru is informed by Knowva's demonstrated feasibility of Thai-language RAG in a university context and its success in reducing faculty time on repetitive queries.
+
+\subsection{ChulaGENIE (Chulalongkorn University)}
+\label{subsection:chulagenieq}
+
+ChulaGENIE is Chulalongkorn University's generative AI platform, launched in November 2024 in partnership with Google Cloud and built on Vertex AI using Gemini 1.5 Flash and Pro \cite{chula2024chulagenieq}. It is the first university-wide generative AI application in Thailand, serving over 50,000 staff, faculty, and students. The platform supports multilingual document processing, custom AI agent creation, research assistance, academic advising, and administrative support.
+
+ChulaGENIE is a general-purpose university AI platform rather than a curriculum-specific system. Its planned academic advisor agents most closely overlap with KUru's functionality, but they are not grounded in specific curriculum documents and do not provide PLO-specific explanations, skill radar charts, or structured career gap analysis. ChulaGENIE's architecture --- specifically its use of Gemini on Vertex AI for Thai-language document processing --- directly informs KUru's choice of Gemini 2.5 Flash as the generation and embedding model.
+
+\subsection{General-Purpose LLM Chatbots (ChatGPT, Gemini)}
+\label{subsection:general-llms}
+
+General-purpose LLMs such as OpenAI's ChatGPT and Google Gemini can answer curriculum-related questions when prompted, but are fundamentally unsuited for KUru's use case. They are not grounded in any specific university's มคอ.2 document, cannot provide page-level citations, and are prone to hallucination when asked about specific PLO codes, course requirements, or career mappings. KUru's RAG architecture is specifically designed to address this limitation.
 
 \section{Literature Review}
 \label{section:literature-review}
 
-<TIP: Review academic papers or technical reports
-that are relevant to your project.
-For each source, briefly summarize its key findings and
-then explain how it informs your own design or implementation decisions.
-The goal is not just to describe what others have done,
-but to build a justification for your own technical choices.
-For example, if you chose a particular algorithm or architecture,
-cite the work that supports that decision. />
+KUru's design draws on four bodies of prior research: RAG architectures for educational applications, knowledge graphs in higher education, LLM-assisted curriculum modelling, and the combination of knowledge graphs with LLMs for explainable recommendations.
+
+\subsection{Retrieval-Augmented Generation in Education}
+\label{subsection:rag-in-education}
+
+The foundational RAG architecture was introduced by Lewis et al. \cite{lewis2020rag}, who demonstrated that combining a dense retrieval component with a generative language model significantly improves factual accuracy on knowledge-intensive tasks compared to generation from parametric memory alone. This grounding property is central to KUru's design requirement that every chatbot answer must cite a specific มคอ.2 page.
+
+Thüs et al. \cite{thus2024owlmentor} developed OwlMentor, an RAG-based learning environment integrated into a university course over two semesters. Their study demonstrated that RAG systems can substantially increase accuracy --- reporting up to 94\% improvement in correct responses over unaugmented generation --- and found that citation-linked responses were critical for student trust and engagement. This directly informs KUru's decision to display inline citations as badges rather than footnotes, making source verification a visible part of every answer.
+
+A comprehensive survey of RAG in educational applications \cite{xu2025ragsurvey} synthesises 51 studies across educational goals and contexts, identifying hallucination prevention and citation accuracy as the two most critical quality dimensions for educational RAG systems. The survey also highlights the particular challenge of processing domain-specific language --- such as formal Thai academic text in มคอ.2 --- as a key factor in retrieval quality.
+
+\subsection{Knowledge Graphs for Curriculum and Learning Path Modelling}
+\label{subsection:kg-curriculum}
+
+Abu-Rasheed et al. \cite{aburasheed2025llmkg} proposed an LLM-assisted pipeline for knowledge graph completion in higher education curriculum modelling. Their approach uses LLMs to extract fine-grained topics from lecture materials and map them to a domain model and user model within a knowledge graph, enabling personalized learning path recommendations. They found that LLM extraction is most effective when topics are contextually similar to existing graph content --- a finding that directly informs KUru's decision to have the faculty advisor review and approve the PLO-to-skill mappings rather than relying on automated extraction alone.
+
+A conceptual framework \cite{pmc2023kgempowerment} introduces a knowledge graph-driven recommender for personalized course and curriculum path recommendation, arguing that knowledge graphs are particularly effective for organizing educational data because their structured, semantically meaningful representation enables coherent learning trajectory guidance. This validates KUru's use of Neo4j for the PLO--Skill--Career graph rather than a purely LLM-based recommendation approach.
+
+\subsection{Knowledge Graphs as Context for LLM Explanations}
+\label{subsection:kg-llm-context}
+
+Abu-Rasheed et al. \cite{aburasheed2024kgcontext} specifically investigated the use of knowledge graphs as context sources for LLM-generated explanations of learning recommendations, proposing a ``conversational explainability'' approach where knowledge graph data is injected into LLM prompts to reduce hallucination risk while maintaining natural dialogue. This is the precise architectural pattern KUru uses for its Career Match Engine: Neo4j provides the structured skill-gap data, and Gemini generates the natural-language explanation from that data rather than from general knowledge.
+
+\subsection{Thai Language Processing in Educational AI}
+\label{subsection:thai-language}
+
+The deployment experience of both Knowva and ChulaGENIE demonstrates that current-generation LLMs --- specifically Anthropic Claude on AWS Bedrock (Knowva) and Google Gemini on Vertex AI (ChulaGENIE) --- are sufficiently capable for Thai-language university document processing. ChulaGENIE's use of Gemini's multilingual capabilities for processing PDFs including Thai-language content with tables and charts directly establishes Gemini as a viable and well-validated choice for KUru's Thai มคอ.2 document processing pipeline.
+
+\subsection{Summary of Design Implications}
+\label{subsection:design-implications}
+
+The reviewed literature collectively supports the following key design decisions in KUru:
+
+\begin{itemize}[leftmargin=80pt]
+    \item RAG with mandatory citation is the appropriate architecture for curriculum Q\&A, as demonstrated by OwlMentor \cite{thus2024owlmentor} and validated by the RAG-in-education survey \cite{xu2025ragsurvey}.
+
+    \item Knowledge graphs are the appropriate structure for PLO--Skill--Career mappings, providing explainable, deterministic outputs that are pedagogically preferable to probabilistic LLM recommendations \cite{pmc2023kgempowerment}.
+
+    \item Human-in-the-loop validation of extracted graph content --- here, faculty advisor review of PLO-to-skill mappings --- is critical for accuracy in educational knowledge graphs, as shown by Abu-Rasheed et al. \cite{aburasheed2025llmkg}.
+
+    \item Gemini is a validated choice for Thai university document processing, established by ChulaGENIE's production deployment at scale \cite{chula2024chulagenieq}.
+
+    \item The combination of RAG (for unstructured narrative content) and knowledge graph traversal (for structured relational queries) is the most complete architecture for a system that must answer both open-ended curriculum questions and precise career-matching queries \cite{pan2024unifying}.
+\end{itemize}

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Windows\\\\Fonts'' | Where-Object { $_Name -match ''Sarabun'' } | Select-Object Name, FullName\")",
+      "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Windows\\\\Fonts'' -Filter ''*Sarabun*'' | Select-Object Name\")",
+      "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Windows\\\\Fonts'' -Filter ''*TH*'' | Select-Object Name\")",
+      "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Windows\\\\Fonts'' -Filter ''*sarabun*'' | Select-Object Name\")",
+      "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Microsoft\\\\Windows\\\\Fonts'' -Filter ''*Sarabun*'' 2>$null | Select-Object Name; Get-ChildItem ''C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Microsoft\\\\Windows\\\\Fonts'' -Filter ''*TH*'' 2>$null | Select-Object Name\")",
+      "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Microsoft\\\\Windows\\\\Fonts'' -Filter ''*Sarabun*'' | Select-Object Name\")",
+      "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Microsoft\\\\Windows\\\\Fonts'' | Where-Object { $_Name -like ''*TH*'' -or $_Name -like ''*sarabun*'' } | Select-Object Name\")"
+    ]
+  }
+}
