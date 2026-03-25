@@ -11,11 +11,15 @@
 \usepackage[hidelinks]{hyperref}  % Allows hyperlink text in built document
 \usepackage{url}  % Allows url line breaks
 \usepackage{microtype}  % For hyphen-letterspacing configuration
-\usepackage{cleveref}  % Smarter referencing
+\usepackage{amsmath}  % \text{} in math mode, displayed equations
+\usepackage{cleveref}  % Smarter referencing (must load after amsmath)
 \usepackage{graphicx}  % Allows insertions of graphics
 \usepackage{tabularx}  % Better tabular environment, with dynamic column size support
 \usepackage{indentfirst}  % Indent first paragraph after headers
 \usepackage{enumitem}  % Better control of itemize, enumerate
+\usepackage{pifont}   % Dingbat symbols for comparison tables
+\newcommand{\cmark}{\ding{51}}  % ✓
+\newcommand{\xmark}{\ding{55}}  % ✗
 
 \graphicspath{{./assets}}
 
@@ -25,7 +29,7 @@
 
 %% -----------------------------------
 % Edit the variables for the paper here!
-\def \srsTitle{KUru: RAG-Based Curriculum Understanding System}
+\def \srsTitle{KUru: Intelligent PLO-to-Career Navigator}
 \def \srsAuthorOne{Thanawat Tantijaroensin 6610545294}
 \def \srsAuthorTwo{Phantawat Luengsiriwattana 6610545871}
 \def \srsAuthorThree{}

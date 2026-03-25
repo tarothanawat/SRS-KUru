@@ -2,11 +2,11 @@
 \label{chap:abstract}
 \addcontentsline{toc}{chapter}{\nameref{chap:abstract}}
 
-University curriculum documents --- particularly the Thai Qualifications Framework for Higher Education document (มคอ.2) --- are dense, formal texts written primarily for accreditation bodies rather than for students. Despite containing critical information about program learning outcomes (PLOs), required skills, and career pathways, these documents are rarely read or understood by the students they are intended to benefit.
+KUru is an AI-powered academic pathway navigation system for Kasetsart University (KU). The system addresses a clearly defined problem: students who are interested in exploring career paths or programs at KU lack personalized, structured guidance when selecting programs for TCAS applications.
 
-KUru is a RAG-based web application that transforms the KU มคอ.2 document into an interactive, personalized career advisor. The system uses Retrieval-Augmented Generation (RAG) with Google Gemini API for semantic search and natural-language generation, and a Neo4j knowledge graph for structured PLO--Skill--Career relationship traversal. Students can query the curriculum in natural language with every answer grounded in the official document with page-level citations, explore their PLOs in plain language, visualize their skill gaps on a radar chart, receive career match recommendations with explainable gap analysis, and generate a personalized learning path toward their target career.
+The system employs a Retrieval-Augmented Generation (RAG) pipeline grounded in official KU curriculum documents (มคอ.2) to enable semantic question-answering over program content in both Thai and English. A Neo4j knowledge graph maps KU faculties, Program Learning Outcomes (PLOs), skill clusters, and career paths, enabling multi-hop reasoning from a student's interest profile to personalized program recommendations. An interest discovery interface grounded in Holland's RIASEC vocational model, presenting eight topic clusters mapped to RIASEC dimensions, builds an initial student interest profile that is progressively refined through implicit behavioral signals. The system serves prospective students only (pre-admission); features for enrolled KU students are out of scope.
 
-The system targets KU students across all year levels and is evaluated against a 50-question advisor-validated test set, targeting chatbot answer accuracy of 80\% or above compared to a BM25 keyword-search baseline.
+The system covers all KU programs and is evaluated using the RAGAS framework for RAG quality and Mean Reciprocal Rank (MRR) and NDCG@5 for recommendation quality.
 
 
 \vspace{.2in}

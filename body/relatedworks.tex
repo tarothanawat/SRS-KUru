@@ -4,99 +4,89 @@
 \section{Competitor Analysis}
 \label{section:competitor-analysis}
 
-Several existing systems address parts of the problem that KUru targets. The following analysis compares four relevant platforms across the dimensions most critical to KUru's value proposition: document grounding, PLO-specific support, skill gap analysis, career matching, and Thai language capability.
+Five categories of existing solutions are relevant to this project:
+
+\subsection{KU Official Information Channels}
+\label{subsection:ku-official}
+
+KU's official website and faculty pages provide static information about programs, curricula, and admission requirements. PLO information is available only within มคอ.2 PDF documents, which are distributed without structured interfaces. TCAS information is scattered across the main KU admissions page, individual faculty pages, and the national mytcas.com platform. No personalization, synthesis, or guidance is offered. The fundamental limitation is that information exists but is not actionable for students making decisions.
+
+\subsection{General-Purpose LLMs}
+\label{subsection:general-llms}
+
+General-purpose language models such as ChatGPT and Gemini can respond to natural language queries about KU programs, but do so from training data rather than authoritative sources. This results in approximations and hallucinations when asked about specific PLOs, current TCAS requirements, or quota numbers. These models have no persistent memory of the student across sessions and provide no structured outputs such as visualizations or deadline trackers.
+
+\subsection{University-Specific AI Advisors at Other Thai Institutions}
+\label{subsection:thai-university-ai}
+
+Knowva (KMITL) and ChulaGENIE (Chulalongkorn University) represent the closest competitors to KUru. Both are AI-assisted advising systems built for specific Thai universities. However, neither is available at KU, neither explicitly links PLOs to career skill requirements, and neither provides TCAS-specific admission guidance. ChulaGENIE focuses on course recommendation for enrolled students rather than pre-admission guidance.
+
+\subsection{TCAS Information Platforms}
+\label{subsection:tcas-platforms}
+
+Dedicated TCAS information platforms, most prominently mytcas.com (the official national TCAS portal operated by the Ministry of Higher Education), aggregate admission data across all Thai universities into a single structured interface. For each program, mytcas.com presents per-round quotas, eligibility criteria (curriculum type, GPAX thresholds), score calculation methods (portfolio weighting, TGAT/TPAT/A-Level proportions), and links to faculty admission pages. The data is updated each TCAS cycle and is the authoritative source consulted by both students and universities.
+
+Despite its comprehensiveness, mytcas.com is a passive information browser, not a guidance system. It presents raw admission data without connecting it to a student's interests, skills, or career goals. Students must independently navigate from a program they have already identified to its admission requirements; the platform provides no discovery mechanism, no program matching, and no PLO or career-path context. KUru is designed to complement mytcas.com by providing the personalized discovery and program-matching layer that sits upstream of the admission details mytcas.com supplies.
+
+\subsection{Comparison Summary}
+\label{subsection:comparison-summary}
 
 \begin{table}[htbp]
 \centering
 \small
 \renewcommand{\arraystretch}{1.4}
-\caption{Competitor Analysis}
-\begin{tabularx}{\textwidth}{|p{2.5cm}|X|X|X|X|X|}
+\caption{Competitor Comparison Summary}
+\begin{tabularx}{\textwidth}{|p{2.5cm}|p{1.4cm}|p{1.6cm}|p{2cm}|p{2.4cm}|X|}
 \hline
-\textbf{Feature} & \textbf{KUru (Proposed)} & \textbf{Knowva (KMITL)} & \textbf{ChulaGENIE (Chula)} & \textbf{General ChatGPT} & \textbf{Static มคอ.2 PDF} \\
+\textbf{Feature} & \textbf{KU Website} & \textbf{mytcas .com} & \textbf{ChatGPT/ Gemini} & \textbf{Knowva/ ChulaGENIE} & \textbf{KUru (ours)} \\
 \hline
-มคอ.2 grounding & RAG + citations & Partial --- admission only & No --- general LLM & No --- hallucination risk & Raw text only \\
+KU-specific curriculum data & Partial (PDF) & \xmark & \xmark & \xmark & Full (มคอ.2 RAG) \\
 \hline
-PLO plain-language explanation & Yes --- structured layers & No & No & Partial --- unpredictable & No \\
+PLO visualization & \xmark & \xmark & \xmark & \xmark & Spider chart \\
 \hline
-Skill gap analysis & Yes --- radar chart & No & No & No & No \\
+Career-to-PLO mapping & \xmark & \xmark & $\sim$ & $\sim$ & Full graph \\
 \hline
-Career match engine & Yes --- graph-based, explainable & Partial --- general advice & No & No & No \\
+TCAS admission guide & Scattered & Full --- all universities & $\sim$ & \xmark & Structured, KU only \\
 \hline
-Learning path generator & Yes --- per student & No & No & No & No \\
+Personalization & \xmark & \xmark & Session-only & Basic & Progressive profile \\
 \hline
-Page-level citations & Yes --- every answer & Unknown & No & No & N/A --- static \\
+Thai language support & \cmark & \cmark & $\sim$ & $\sim$ & \cmark \\
 \hline
-Thai language support & Yes --- Gemini native & Yes --- Claude on AWS & Yes --- Gemini multilingual & Partial & Yes --- static text \\
-\hline
-Specific to KU SKE curriculum & Yes & No --- KMITL only & No --- Chula only & No & Yes --- raw document \\
+KU student skill tracking & \xmark & \xmark & \xmark & \xmark & Yes (Phase 2) \\
 \hline
 \end{tabularx}
 \end{table}
 
-\subsection{Knowva (KMITL)}
-\label{subsection:knowva}
-
-Knowva is a generative AI virtual assistant developed by King Mongkut's Institute of Technology Ladkrabang (KMITL) in partnership with Amazon Web Services and DailiTech Co., Ltd., powered by Amazon Bedrock using Anthropic Claude \cite{aws2025kmitl}. The system was designed specifically to answer prospective student queries about program information, admission processes, degree requirements, and career prospects. Following its launch, Knowva handled over 6,000 student inquiries during an educational exhibition and achieved a 60 percent increase in student satisfaction compared to the previous year.
-
-Knowva is the closest Thai university AI system to KUru in purpose, but differs in scope and depth. Knowva targets prospective students seeking admission information, not enrolled students navigating PLO-to-career pathways. It does not provide skill gap analysis, radar charts, or personalized learning path generation. KUru is informed by Knowva's demonstrated feasibility of Thai-language RAG in a university context and its success in reducing faculty time on repetitive queries.
-
-\subsection{ChulaGENIE (Chulalongkorn University)}
-\label{subsection:chulagenieq}
-
-ChulaGENIE is Chulalongkorn University's generative AI platform, launched in November 2024 in partnership with Google Cloud and built on Vertex AI using Gemini 1.5 Flash and Pro \cite{chula2024chulagenieq}. It is the first university-wide generative AI application in Thailand, serving over 50,000 staff, faculty, and students. The platform supports multilingual document processing, custom AI agent creation, research assistance, academic advising, and administrative support.
-
-ChulaGENIE is a general-purpose university AI platform rather than a curriculum-specific system. Its planned academic advisor agents most closely overlap with KUru's functionality, but they are not grounded in specific curriculum documents and do not provide PLO-specific explanations, skill radar charts, or structured career gap analysis. ChulaGENIE's architecture --- specifically its use of Gemini on Vertex AI for Thai-language document processing --- directly informs KUru's choice of Gemini 2.5 Flash as the generation and embedding model.
-
-\subsection{General-Purpose LLM Chatbots (ChatGPT, Gemini)}
-\label{subsection:general-llms}
-
-General-purpose LLMs such as OpenAI's ChatGPT and Google Gemini can answer curriculum-related questions when prompted, but are fundamentally unsuited for KUru's use case. They are not grounded in any specific university's มคอ.2 document, cannot provide page-level citations, and are prone to hallucination when asked about specific PLO codes, course requirements, or career mappings. KUru's RAG architecture is specifically designed to address this limitation.
-
 \section{Literature Review}
 \label{section:literature-review}
 
-KUru's design draws on four bodies of prior research: RAG architectures for educational applications, knowledge graphs in higher education, LLM-assisted curriculum modelling, and the combination of knowledge graphs with LLMs for explainable recommendations.
+\subsection{Retrieval-Augmented Generation (RAG)}
+\label{subsection:rag}
 
-\subsection{Retrieval-Augmented Generation in Education}
-\label{subsection:rag-in-education}
+Lewis et al.\ \cite{lewis2020rag} introduced RAG as an architecture combining dense retrieval with sequence-to-sequence generation for open-domain question answering. The key insight is that grounding generation in retrieved evidence substantially reduces hallucination and allows the model to answer questions requiring specific factual knowledge not reliably encoded in model weights. This is directly applicable to KUru's requirement to answer questions about specific PLO content, admission criteria, and course structures from มคอ.2 documents.
 
-The foundational RAG architecture was introduced by Lewis et al. \cite{lewis2020rag}, who demonstrated that combining a dense retrieval component with a generative language model significantly improves factual accuracy on knowledge-intensive tasks compared to generation from parametric memory alone. This grounding property is central to KUru's design requirement that every chatbot answer must cite a specific มคอ.2 page.
+For evaluation, the RAGAS framework \cite{es2023ragas} provides automated metrics for RAG pipeline quality including faithfulness, answer relevancy, and context recall, enabling objective assessment of whether the system's answers are grounded in retrieved curriculum content.
 
-Thüs et al. \cite{thus2024owlmentor} developed OwlMentor, an RAG-based learning environment integrated into a university course over two semesters. Their study demonstrated that RAG systems can substantially increase accuracy --- reporting up to 94\% improvement in correct responses over unaugmented generation --- and found that citation-linked responses were critical for student trust and engagement. This directly informs KUru's decision to display inline citations as badges rather than footnotes, making source verification a visible part of every answer.
+\subsection{Knowledge Graphs for Educational Recommendation}
+\label{subsection:kg-education}
 
-A comprehensive survey of RAG in educational applications \cite{xu2025ragsurvey} synthesises 51 studies across educational goals and contexts, identifying hallucination prevention and citation accuracy as the two most critical quality dimensions for educational RAG systems. The survey also highlights the particular challenge of processing domain-specific language --- such as formal Thai academic text in มคอ.2 --- as a key factor in retrieval quality.
+Knowledge graph-based recommendation systems have been demonstrated in educational contexts to enable multi-hop reasoning that purely embedding-based approaches cannot support. Embedding-based retrieval can identify semantically similar items but cannot follow explicit typed relationships such as `this PLO develops this skill' or `this career requires this skill level.' The Neo4j graph in KUru encodes these typed relationships explicitly, enabling recommendation paths that are both explainable and traceable to specific curriculum documents \cite{aburasheed2025llmkg, pmc2023kgempowerment}.
 
-\subsection{Knowledge Graphs for Curriculum and Learning Path Modelling}
-\label{subsection:kg-curriculum}
+Using knowledge graphs as context sources for LLM-generated explanations has been specifically investigated by Abu-Rasheed et al.\ \cite{aburasheed2024kgcontext}, who propose a conversational explainability approach where knowledge graph data is injected into LLM prompts to reduce hallucination risk while maintaining natural dialogue. This is the precise architectural pattern KUru uses for its Program Recommendation Engine: Neo4j provides the structured PLO-to-skill data, and Gemini generates the natural-language explanation from that data rather than from general knowledge.
 
-Abu-Rasheed et al. \cite{aburasheed2025llmkg} proposed an LLM-assisted pipeline for knowledge graph completion in higher education curriculum modelling. Their approach uses LLMs to extract fine-grained topics from lecture materials and map them to a domain model and user model within a knowledge graph, enabling personalized learning path recommendations. They found that LLM extraction is most effective when topics are contextually similar to existing graph content --- a finding that directly informs KUru's decision to have the faculty advisor review and approve the PLO-to-skill mappings rather than relying on automated extraction alone.
+\subsection{Adaptive Quiz and Interest Profiling}
+\label{subsection:interest-profiling}
 
-A conceptual framework \cite{pmc2023kgempowerment} introduces a knowledge graph-driven recommender for personalized course and curriculum path recommendation, arguing that knowledge graphs are particularly effective for organizing educational data because their structured, semantically meaningful representation enables coherent learning trajectory guidance. This validates KUru's use of Neo4j for the PLO--Skill--Career graph rather than a purely LLM-based recommendation approach.
+KUru's interest discovery interface is grounded in Holland's RIASEC model (Realistic, Investigative, Artistic, Social, Enterprising, Conventional), the dominant framework in vocational psychology for connecting individual interests to occupational environments \cite{holland1997}. This theoretical foundation is directly compatible with KUru's O*NET career data layer \cite{onet2024}, which uses RIASEC codes to classify all 900+ occupations. Rather than presenting raw RIASEC questionnaire items, KUru maps the six Holland types to eight topic clusters presented as a structured grid, preserving the theoretical grounding while reducing cognitive load for a high school student audience. The mapping from topic selection to RIASEC-weighted skill vectors is defined in Section~\ref{subsection:model-design}.
 
-\subsection{Knowledge Graphs as Context for LLM Explanations}
-\label{subsection:kg-llm-context}
+The interface design is shaped by three evidence-based principles from the preference elicitation (PE) and recommender systems literature.
 
-Abu-Rasheed et al. \cite{aburasheed2024kgcontext} specifically investigated the use of knowledge graphs as context sources for LLM-generated explanations of learning recommendations, proposing a ``conversational explainability'' approach where knowledge graph data is injected into LLM prompts to reduce hallucination risk while maintaining natural dialogue. This is the precise architectural pattern KUru uses for its Career Match Engine: Neo4j provides the structured skill-gap data, and Gemini generates the natural-language explanation from that data rather than from general knowledge.
+First, the system uses explicit attribute-based elicitation rather than item-based elicitation. Research on large-scale onboarding systems demonstrates that item-based approaches --- asking users to evaluate individual items directly --- are unsuitable when the item corpus is large, because no single item efficiently maps a new user's preference space \cite{meshi2023preference}. KUru instead presents topic clusters (attributes) that map directly to RIASEC dimensions and downstream skill vectors, enabling broad preference coverage in minimal interactions.
 
-\subsection{Thai Language Processing in Educational AI}
-\label{subsection:thai-language}
+Second, the questionnaire is deliberately minimal. Bchanged et al.\ \cite{bchanged2018preference} demonstrated at ACM RecSys that an optimized Static Preference Questionnaire (SPQ) can reduce necessary questionnaire length by up to a factor of three compared to standard elicitation methods, while maintaining or improving recommendation quality. While the SPQ principle advocates for minimalism, KUru's five-step design remains substantially shorter than validated instruments while incorporating adaptive question selection --- targeting only ambiguous RIASEC dimensions rather than administering all questions uniformly --- which preserves the efficiency principle while improving signal quality. KUru's five-step adaptive design --- tile orientation, targeted pairwise comparisons on ambiguous RIASEC dimensions, an image-based scenario confirmation, an optional dealbreaker filter, and a confidence weighting step --- is substantially shorter than a full validated interest inventory while producing a more reliable vector than a single grid-plus-question approach. The pairwise comparison step is adaptive: students with a clear RIASEC profile encounter fewer questions, keeping total completion time within 2--4 minutes. No individual step constitutes a comprehensive psychometric assessment; the design is intended as a reliable cold-start initialisation, not a definitive vocational evaluation.
 
-The deployment experience of both Knowva and ChulaGENIE demonstrates that current-generation LLMs --- specifically Anthropic Claude on AWS Bedrock (Knowva) and Google Gemini on Vertex AI (ChulaGENIE) --- are sufficiently capable for Thai-language university document processing. ChulaGENIE's use of Gemini's multilingual capabilities for processing PDFs including Thai-language content with tables and charts directly establishes Gemini as a viable and well-validated choice for KUru's Thai มคอ.2 document processing pipeline.
+Third, the system addresses the new user cold-start problem \cite{bobadilla2014coldstart} through this explicit elicitation phase, then transitions to progressive implicit profiling. Behavioral signals including program page visits, chatbot queries, and saved items continuously refine the user's RIASEC vector without additional questioning \cite{kanoje2015user, schilder2023global}. The structured grid interface is supported by de Vries et al.\ \cite{devries2024preference}, who found in a controlled user study that high-guidance elicitation --- presenting structured options rather than open-ended prompts --- produces significantly higher recommendation match scores than low-guidance alternatives.
 
-\subsection{Summary of Design Implications}
-\label{subsection:design-implications}
+It should be noted that interest-based elicitation has inherent limitations as a predictor of long-term academic fit. Meta-analytic research on full validated interest inventories reports approximately 50\% accuracy in predicting eventual career choice even with substantially longer instruments \cite{holland1997}. KUru's abbreviated elicitation is accordingly framed as a starting point for exploration rather than a definitive match, with recommendation confidence increasing as the implicit profiling layer accumulates behavioral signals over subsequent sessions. This limitation is discussed further in Section~\ref{section:limitations}.
 
-The reviewed literature collectively supports the following key design decisions in KUru:
-
-\begin{itemize}[leftmargin=80pt]
-    \item RAG with mandatory citation is the appropriate architecture for curriculum Q\&A, as demonstrated by OwlMentor \cite{thus2024owlmentor} and validated by the RAG-in-education survey \cite{xu2025ragsurvey}.
-
-    \item Knowledge graphs are the appropriate structure for PLO--Skill--Career mappings, providing explainable, deterministic outputs that are pedagogically preferable to probabilistic LLM recommendations \cite{pmc2023kgempowerment}.
-
-    \item Human-in-the-loop validation of extracted graph content --- here, faculty advisor review of PLO-to-skill mappings --- is critical for accuracy in educational knowledge graphs, as shown by Abu-Rasheed et al. \cite{aburasheed2025llmkg}.
-
-    \item Gemini is a validated choice for Thai university document processing, established by ChulaGENIE's production deployment at scale \cite{chula2024chulagenieq}.
-
-    \item The combination of RAG (for unstructured narrative content) and knowledge graph traversal (for structured relational queries) is the most complete architecture for a system that must answer both open-ended curriculum questions and precise career-matching queries \cite{pan2024unifying}.
-\end{itemize}
+This work applies established cold-start PE methods and the RIASEC vocational framework to academic pathway advising for Thai university applicants --- a novel application context in which the user population (Thai high school students navigating TCAS), the item space (university programs defined by PLOs), and the decision stakes (a multi-year academic commitment) differ substantially from the content recommendation domains in which these methods were originally developed.

@@ -3,28 +3,78 @@
 
 \section{Software Development Methodology}
 \label{section:software-development-methodology}
-<TIP: Describe your software development methodology in this section. />
+
+The project uses an Agile-inspired iterative approach adapted for a two-person team over one semester. Development is organized into two-week sprints aligned with the phases in the project schedule. Each sprint ends with a working, demonstrable increment. A shared Kanban board (Notion) tracks tasks, and GitHub is used for version control with a feature-branch workflow. Weekly check-ins with the project advisor provide feedback and course correction.
+
+Given the data dependency at the start of the project (มคอ.2 documents from faculty), the first two weeks are allocated to data collection and pipeline setup, with feature development beginning only once the core data layer is operational.
 
 \section{Technology Stack}
 \label{section:technology-stack}
-<TIP: Describe your technology stack here. See the following example from ThaiProgrammer.org />
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.5\textwidth]{examples/tech-stack.png}
-    \caption{Example technology stack}
-\end{figure}
+
+\begin{itemize}[leftmargin=80pt]
+    \item \textbf{Frontend:} Next.js 14 (App Router), Tailwind CSS, Shadcn/UI. Chosen for familiarity, strong TypeScript support, and built-in i18n routing for Thai/English.
+
+    \item \textbf{Backend:} Python FastAPI. Chosen for Python ecosystem access (PyMuPDF for PDF processing, sentence-transformers, neo4j driver) and async performance.
+
+    \item \textbf{Vector database:} Supabase (PostgreSQL + pgvector extension). Stores มคอ.2 document embeddings, precomputed O*NET occupation interest profiles, user profiles, TCAS structured data, and the interaction log (program saves, card views, TCAS guide views, chatbot queries with weights and timestamps). A background job periodically recomputes collaborative scores from the interaction log. Supabase Auth handles authentication.
+
+    \item \textbf{Graph database:} Neo4j on Railway. Stores the PLO--Skill--Career knowledge graph. Queried via Cypher from the FastAPI backend.
+
+    \item \textbf{AI:} Gemini 2.5 Flash (generation), Gemini text-embedding-001 (embeddings), accessed via Google AI SDK for Python.
+
+    \item \textbf{Data processing:} PyMuPDF (PDF extraction), custom Python chunking pipeline.
+
+    \item \textbf{Deployment:} Vercel (frontend), Railway (FastAPI backend + Neo4j).
+\end{itemize}
 
 \section{Coding Standards}
 \label{section:coding-standards}
-<TIP: Describe your coding standard for this project here. />
+
+\begin{itemize}[leftmargin=80pt]
+    \item \textbf{Python:} PEP 8, type hints on all function signatures, docstrings for all public functions.
+
+    \item \textbf{TypeScript:} ESLint with Next.js recommended config, Prettier for formatting.
+
+    \item \textbf{Git:} Conventional commits format (feat/fix/chore/docs). Feature branches merged via pull request with at least one review.
+
+    \item \textbf{Environment:} All secrets managed via .env files, never committed. Supabase and Gemini API keys stored as environment variables.
+\end{itemize}
 
 \section{Schedule}
 \label{section:schedule}
-<TIP: Show the schedule of your project.
-Use a Gantt chart. The items should agree with features
-you listed in Chapter 1. />
+
+\begin{table}[htbp]
+\centering
+\small
+\renewcommand{\arraystretch}{1.4}
+\caption{Project Schedule}
+\begin{tabularx}{\textwidth}{|p{2cm}|p{3cm}|X|}
+\hline
+\textbf{Period} & \textbf{Phase} & \textbf{Deliverables} \\
+\hline
+Weeks 1--2 & Data collection & Receive มคอ.2 and TCAS admission data from KU faculty, download O*NET dataset \\
+\hline
+Weeks 3--4 & Data pipeline & PDF extraction, chunking, embedding into Supabase pgvector; Neo4j schema + pilot data \\
+\hline
+Weeks 5--6 & Core AI & RAG pipeline (retrieval + Gemini generation); recommendation engine (graph + interest profile) \\
+\hline
+Weeks 7--9 & Frontend & Interest discovery UI, PLO spider chart, TCAS guide, chatbot interface, saved profile \\
+\hline
+Weeks 10--11 & Evaluation & RAGAS evaluation, MRR/NDCG test set, user testing with 10--15 high school students \\
+\hline
+Week 12 & Demo \& docs & Final demo preparation, documentation, and project report \\
+\hline
+\end{tabularx}
+\end{table}
 
 \section{Progress Tracking Report}
 \label{section:progress-tracking-report}
-<TIP: Show that you have been working on this project overtime.
-It can be in the form of a burndown chart or a contribution graph from GitHub./>
+
+\begin{figure}[h]
+    \centering
+    \fbox{\parbox{0.9\textwidth}{\centering\vspace{1em}
+    \textit{[GitHub contribution graph and sprint burndown charts to be included here as the project progresses.]}
+    \vspace{1em}}}
+    \caption{Progress Tracking}
+    \label{fig:progress-tracking}
+\end{figure}

@@ -4,69 +4,57 @@
 \section{Background}
 \label{section:background}
 
-Higher education institutions design their degree programs around Program Learning Outcomes (PLOs) --- formally defined statements that describe the knowledge, skills, and competencies that graduates of a program are expected to demonstrate. In Thailand, these outcomes are mandated and documented through the Thai Qualifications Framework for Higher Education (TQF), with the มคอ.2 document serving as the official curriculum specification for each program.
+Thailand's university admission system, TCAS (Thai University Central Admission System), requires students to select and apply to specific faculties at specific universities through up to four rounds, each with distinct requirements, quotas, and criteria. Kasetsart University (KU), one of Thailand's leading public universities, offers programs spanning agriculture, engineering, science, humanities, business, and more across its campuses.
 
-Despite the critical role PLOs play in shaping the educational journey of every student, there is a persistent and well-documented gap between the curriculum as designed and the curriculum as understood by students. The มคอ.2 document is written in formal academic Thai, structured to satisfy accreditation bodies, and rarely read by the students it is intended to benefit. As a result, students frequently progress through their degree without a clear understanding of what competencies they are building, what careers those competencies prepare them for, or what skills they still lack.
+Despite the availability of official information about each program, most prospective students make faculty selection decisions with limited structured guidance. Program Learning Outcomes (PLOs), which formally document the competencies a graduate will have developed, are defined for every accredited program in Thailand via the TQF (Thai Qualifications Framework) document system, known as มคอ.2. These documents are the authoritative source of what a program actually teaches and produces, yet they are inaccessible to the students they most directly affect: written in formal Thai, formatted inconsistently across faculties, and distributed as PDFs on faculty websites without any structured interface.
 
-Recent advances in Large Language Models (LLMs) and Retrieval-Augmented Generation (RAG) have created a new opportunity to bridge this gap. RAG architectures enable AI systems to answer questions grounded in specific documents with source citations, overcoming the hallucination problem of general-purpose LLMs. Combined with graph-based knowledge representations, these technologies make it possible to build systems that not only explain curriculum content in plain language, but also map that content to skills and career outcomes in a transparent and explainable way.
-
-KUru (KU Curriculum Understanding) is a web-based application built on this foundation. It processes the official KU มคอ.2 document and transforms it into an interactive platform where students can query the curriculum, explore their PLOs, visualize skill gaps, and receive personalized career and learning path recommendations --- all grounded in the official curriculum document.
+Prospective students who are interested in KU programs --- whether finishing high school, taking a gap year, or reconsidering their options --- face this problem acutely, as they must make high-stakes decisions with limited structured guidance.
 
 \section{Problem Statement}
 \label{section:problem-statement}
 
-Within the Kasetsart University Computer Engineering program, three interconnected problems consistently affect student outcomes:
+High school students selecting KU programs for TCAS lack personalized, grounded guidance that connects their interests to specific program PLOs, career outcomes, and admission requirements. Existing tools are either generic (general-purpose LLMs with no KU-specific data) or static (official faculty web pages with no personalization or synthesis).
 
-\begin{itemize}[leftmargin=80pt]
-    \item \textbf{PLO language is inaccessible.} The formal Thai used in มคอ.2 is written for accreditation reviewers, not students. First-year students entering the program cannot interpret what PLO3 or PLO7 means in terms of skills they should develop or evidence they should produce.
-
-    \item \textbf{The connection between courses, skills, and careers is invisible.} Students select electives and plan their academic trajectory without a data-driven understanding of how each course contributes to their skill profile or moves them toward a specific career.
-
-    \item \textbf{Career planning is reactive rather than intentional.} Without a personal skill-gap analysis, students entering the job market or internship applications are unable to articulate which PLOs they have achieved or identify what specific skills they still need to develop.
-\end{itemize}
-
-These problems are not unique to KU --- they reflect a structural limitation of outcome-based education documentation across Thai higher education --- but KU provides a concrete and well-scoped context in which to address them.
+The consequence is suboptimal faculty selection, contributing to higher rates of program dissatisfaction, transfer requests, and dropout.
 
 \section{Solution Overview}
 \label{section:solution-overview}
 
-KUru transforms the static มคอ.2 curriculum document into an intelligent, interactive platform through two complementary AI architectures working in tandem.
+KUru is a bilingual (Thai and English) web application that serves as an intelligent advisor for students who are exploring career paths or programs at Kasetsart University. The system is grounded in official KU curriculum documents provided by faculty, making its guidance specific, accurate, and authoritative rather than approximate.
 
-The first is a Retrieval-Augmented Generation (RAG) pipeline. The มคอ.2 document is ingested, chunked by section, and indexed as semantic vector embeddings in a pgvector database using the Gemini text-embedding-004 model. When a student asks a question, the system retrieves the most semantically relevant curriculum passages and passes them to Gemini 2.5 Flash to generate a cited, plain-language answer. Every response is grounded in the official document --- the system cannot answer from general knowledge, and any unanswerable question is explicitly flagged.
+The system conducts adaptive interest discovery, produces ranked program recommendations with PLO visualizations, provides career path detail for matched programs, and presents a structured TCAS admission guide specific to each faculty and round.
 
-The second is a PLO--Skill--Career knowledge graph stored in Neo4j. All eight PLOs are extracted from the document and mapped to a 16-skill taxonomy and a career dictionary with advisor approval. This graph enables deterministic, explainable career matching and learning path generation through Cypher graph traversal.
+The system focuses exclusively on students at the pre-admission stage --- before any enrollment decision is made.
 
-The system is deployed as a Next.js web application with a FastAPI backend, accessible to all KU students at a public URL at no cost.
+The core AI architecture combines a RAG pipeline over มคอ.2 curriculum documents with a Neo4j knowledge graph connecting faculties, PLOs, skills, and careers. All recommendations are grounded in retrieved curriculum content, not generated from model weights alone.
 
 \subsection{Features}
 \label{subsection:features}
 
 \begin{enumerate}[leftmargin=80pt]
-    \item \textbf{Curriculum Q\&A Chatbot:} A RAG-powered chatbot that answers student questions about the KU curriculum in Thai or English, with every response citing the relevant มคอ.2 page and section.
+    \item \textbf{Interest Discovery:} A five-step adaptive interest elicitation interface grounded in Holland's RIASEC vocational model \cite{holland1997}: (1) eight RIASEC-mapped topic tiles for initial orientation; (2) 4--6 adaptive pairwise forced-choice questions targeting only the RIASEC dimensions left ambiguous by Step~1; (3) one image-based scenario question confirming the dominant signal non-verbally; (4) an optional dealbreaker filter removing unwanted domains from all recommendations regardless of fit score; and (5) a confidence check that weights uncertain answers proportionally lower in the resulting vector. The output is a normalised 6-dimensional RIASEC vector. Total elicitation time is 2--4 minutes. As the student accumulates interaction data, a blending weight $\alpha$ shifts the system progressively from RIASEC-based to behavioural-signal-based recommendations.
 
-    \item \textbf{PLO Explainer:} Each PLO is presented in three layers --- a plain-language summary, a real-world example, and the original Thai text with page reference --- alongside the skills it requires and the courses that address it.
+    \item \textbf{Program Recommendation Engine:} Ranked list of KU programs matched to the student's interest profile, explained in plain language, covering all KU faculties.
 
-    \item \textbf{Skill Map and Gap Analysis:} A radar chart that visualises the student's self-assessed skill levels across 16 skills in four categories against the program's target levels, with a prioritised gap analysis.
+    \item \textbf{PLO Spider Chart Visualizer:} Interactive radar chart showing the skill profile a student will develop in any given program, overlaid with the student's interest profile for visual fit assessment.
 
-    \item \textbf{Career Match Engine:} Graph-based career recommendations showing match percentage, skill alignment, and specific gaps for each recommended career role.
+    \item \textbf{Curriculum Chatbot:} RAG-powered Q\&A interface over มคอ.2 documents supporting natural language queries in Thai and English about any KU program.
 
-    \item \textbf{Learning Path Generator:} A personalised, ordered sequence of courses, electives, and activities that close the student's skill gaps toward a chosen career target, with each step tagged to the PLOs it addresses.
+    \item \textbf{TCAS Admission Guide:} Structured per-faculty, per-round admission information including GPAX requirements, exam score criteria (TGAT/TPAT/A-Level), portfolio requirements, and deadlines.
+
+    \item \textbf{Saved Profile Dashboard:} Optional login to persist interest profile, bookmarked programs, and TCAS deadline tracking across sessions.
 \end{enumerate}
 
-\section{Target User}
-\label{section:target-user}
+\section{Target Users}
+\label{section:target-users}
 
-KUru is designed for students enrolled in the Software and Knowledge Engineering (SKE) track within the Department of Computer Engineering at Kasetsart University. Four user personas capture the range of use cases:
+KUru serves prospective students at the pre-admission stage:
 
 \begin{itemize}[leftmargin=80pt]
-    \item \textbf{First-year students (Year 1):} who have just entered the program and need to understand what their PLOs mean in practical terms and what skills they are expected to develop across their degree.
-
-    \item \textbf{Mid-program students (Year 2--3):} who are selecting electives and planning internship applications, and need to align their course choices with a specific career target.
-
-    \item \textbf{Final-year students (Year 4):} who are preparing for job applications and need to translate their academic experience into career-ready evidence, and identify any remaining skill gaps before graduation.
-
-    \item \textbf{Faculty advisors:} who can use the system's aggregated skill data (post-MVP) to identify which PLOs students are systematically underachieving across the cohort.
+    \item \textbf{Prospective KU applicants (pre-admission):} Anyone considering KU programs before making an enrollment decision. This includes high school students in Mathayom 4--6 preparing for TCAS, gap-year students reconsidering their options, and anyone exploring what KU programs offer and what careers they lead to. No prior KU enrollment is assumed. Guidance spans from initial interest discovery through to understanding specific TCAS admission requirements.
 \end{itemize}
+
+Users may access the system without an account. Login unlocks profile persistence, saved programs, and deadline notifications.
 
 \section{Terminology}
 \label{section:terminology}
@@ -80,23 +68,27 @@ KUru is designed for students enrolled in the Software and Knowledge Engineering
 \hline
 \textbf{Term} & \textbf{Definition} \\
 \hline
-มคอ.2 (TQF2) & Thai Qualifications Framework Level 2 document --- the official curriculum specification required by Thailand's Office of the Higher Education Commission. \\
+PLO & Program Learning Outcome --- a formally defined competency that graduates of a specific program are expected to have developed, as documented in มคอ.2. \\
 \hline
-PLO & Program Learning Outcome --- a formally defined statement describing the knowledge, skills, or competency that a graduate of a program is expected to demonstrate. \\
+CLO & Course Learning Outcome --- a learning outcome defined at the individual course level, documented in มคอ.3. CLOs contribute to PLOs. \\
 \hline
-RAG & Retrieval-Augmented Generation --- an AI architecture combining semantic document retrieval with LLM generation, ensuring answers are grounded in a specific knowledge source. \\
+มคอ.2 & The Thai Qualifications Framework program specification document for each accredited university program. Contains PLOs, curriculum structure, and admission requirements. \\
 \hline
-Knowledge Graph (KG) & A structured data model that represents entities (PLOs, skills, careers) as nodes and their relationships as edges, enabling semantic queries and graph traversal. \\
+มคอ.3 & The course-level specification document detailing CLOs, teaching methods, and assessment for each course. \\
 \hline
-pgvector & A PostgreSQL extension that stores and queries high-dimensional vector embeddings, enabling semantic similarity search within the Supabase relational database. \\
+TCAS & Thai University Central Admission System --- the national university admission platform through which students apply to Thai universities in up to four rounds per year. \\
 \hline
-Skill Gap & The difference between a student's current self-assessed skill level and the target skill level required by a specific PLO or career role. \\
+TGAT/TPAT/A-Level & Standardized national examinations used as admission criteria in TCAS Rounds 2--4. \\
 \hline
-BM25 & Best Match 25 --- a classical keyword-based relevance ranking function used as the baseline retrieval method for comparison against the RAG semantic search approach. \\
+RAG & Retrieval-Augmented Generation --- an AI architecture that retrieves relevant passages from a document corpus and provides them as context to a language model before generating a response, grounding output in retrieved evidence. \\
 \hline
-Cypher & The declarative query language used to interact with Neo4j graph databases, used in KUru to traverse PLO--Skill--Career relationships. \\
+Knowledge Graph & A graph database structure in which nodes represent entities (faculties, PLOs, skills, careers) and edges represent relationships between them (a faculty produces certain PLOs, a PLO develops certain skills, a career requires certain skills). \\
 \hline
-Neo4j & An open-source graph database management system used to store and query the PLO--Skill--Career knowledge graph in KUru, self-hosted on Railway. \\
+O*NET & The Occupational Information Network --- a US Department of Labor database cataloguing approximately 900 occupations with structured skill requirements. Used as the career-to-skill data layer. \\
+\hline
+RIASEC & Holland's six vocational personality types: Realistic, Investigative, Artistic, Social, Enterprising, Conventional. Used as the theoretical framework for interest elicitation and as the native classification system of the O*NET occupational database. \\
+\hline
+Holland Code & A two-letter code formed from a person's two most dominant RIASEC types (e.g., IR for Investigative-Realistic), used as a human-readable summary of an individual's vocational interest profile. \\
 \hline
 \end{tabularx}
 \end{table}

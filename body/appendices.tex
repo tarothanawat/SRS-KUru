@@ -11,8 +11,40 @@
 
 %% Edit past this comment line.
 
-\newappendix{Example}
-<TIP: Put additional or supplementary information/data/figures in appendices. />
+\newappendix{RIASEC-to-Topic Cluster Mapping}
+
+Table~\ref{tab:riasec-mapping} documents the mapping between Holland's six RIASEC types and the eight topic clusters presented in the interest discovery interface. Each topic tile is assigned a primary RIASEC type and a secondary RIASEC type with associated weights. When a student selects a tile, both weights are added to the corresponding dimensions of the 6-dimensional RIASEC vector. After all five elicitation steps (tile selection, pairwise comparisons, scenario confirmation, dealbreaker filter, and confidence weighting), the vector is L2-normalised before use in retrieval and fit score computation.
+
+\begin{table}[htbp]
+\centering
+\small
+\renewcommand{\arraystretch}{1.4}
+\caption{RIASEC-to-Topic Cluster Weight Mapping}
+\label{tab:riasec-mapping}
+\begin{tabularx}{\textwidth}{|p{3.5cm}|p{2.5cm}|p{1.2cm}|p{3cm}|p{1.2cm}|}
+\hline
+\textbf{Topic Cluster} & \textbf{Primary RIASEC} & \textbf{Weight} & \textbf{Secondary RIASEC} & \textbf{Weight} \\
+\hline
+Computers \& Digital & Investigative (I) & 0.8 & Realistic (R) & 0.5 \\
+\hline
+Science \& Research & Investigative (I) & 0.9 & Realistic (R) & 0.4 \\
+\hline
+Engineering \& Building & Realistic (R) & 0.9 & Investigative (I) & 0.5 \\
+\hline
+Arts \& Design & Artistic (A) & 0.9 & Enterprising (E) & 0.4 \\
+\hline
+Business \& Leadership & Enterprising (E) & 0.9 & Social (S) & 0.4 \\
+\hline
+People \& Society & Social (S) & 0.9 & Enterprising (E) & 0.4 \\
+\hline
+Nature \& Environment & Realistic (R) & 0.8 & Investigative (I) & 0.4 \\
+\hline
+Organization \& Data & Conventional (C) & 0.9 & Investigative (I) & 0.4 \\
+\hline
+\end{tabularx}
+\end{table}
+
+\noindent\textit{Note: Weights reflect the relative centrality of each RIASEC dimension to the topic cluster as assessed by the development team and reviewed by the faculty advisor. These values are intended as a reasonable initialisation and may be refined through user testing.}
 
 %% Remove the following appendix before publishing your work.
 

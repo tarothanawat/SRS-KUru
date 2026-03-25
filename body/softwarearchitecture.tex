@@ -3,40 +3,87 @@
 
 \section{System Architecture Overview}
 \label{section:architecture-overview}
-<TIP: Provide a high-level description of your system's structure.
-Include either a Domain Model (to describe core business concepts
-and their relationships)
-or a Design Class Diagram (to describe how your code is organized
-into classes and packages),
-whichever best communicates your design.
-Accompany your diagram with a short paragraph explaining the key
-components and how they interact. />
+
+KUru is a three-tier web application with a distinct AI layer. The frontend (Next.js) communicates with a Python FastAPI backend, which orchestrates two AI subsystems: a RAG pipeline for curriculum Q\&A and a graph-based recommendation engine. Both subsystems read from a shared data layer consisting of Supabase (PostgreSQL + pgvector for embeddings) and Neo4j (knowledge graph on Railway).
+
+\begin{figure}[h]
+    \centering
+    \fbox{\parbox{0.9\textwidth}{\centering\vspace{1em}
+    \textit{[Figure placeholder: System architecture diagram showing: Next.js frontend $\rightarrow$ FastAPI backend $\rightarrow$ RAG Engine (Supabase pgvector + Gemini) and Recommendation Engine (Neo4j + interest profile) $\rightarrow$ Data Ingestion Pipeline $\rightarrow$ External sources (มคอ.2 PDFs, O*NET, TCAS data). Also showing: Supabase Auth for user profiles and Gemini API for LLM calls.]}
+    \vspace{1em}}}
+    \caption{KUru System Architecture}
+    \label{fig:system-architecture}
+\end{figure}
 
 \section{Software Design}
 \label{section:software-design}
-<TIP: Describe the runtime behavior of your system.
-Include a Sequence Diagram for your most important use cases.
-Focus on scenarios with non-trivial interactions between components.
-If your project involves a novel algorithm,
-describe it here and explain why you designed it this way. />
+
+\subsection{RAG Pipeline Sequence}
+\label{subsection:rag-pipeline}
+
+When a user submits a query to the curriculum chatbot: (1) the query is embedded using Gemini text-embedding-001; (2) the embedding is used to perform a cosine similarity search against the pgvector store of มคอ.2 document chunks; (3) the top-$k$ retrieved chunks are assembled into a prompt context along with the user query and the conversation history; (4) Gemini 2.5 Flash generates a grounded response in the requested language; (5) source citations are appended to the response.
+
+\subsection{Recommendation Pipeline Sequence}
+\label{subsection:recommendation-pipeline}
+
+When a student completes the interest discovery flow, the recommendation pipeline proceeds in six stages:
+
+\begin{enumerate}[leftmargin=80pt]
+    \item \textbf{RIASEC vector construction.} The five-step adaptive elicitation (UC-01) produces a weighted 6-dimensional RIASEC vector using the predefined topic-to-RIASEC mapping table in Appendix~\ref{appendix:A}. Pairwise comparison responses, confidence scalars, and dealbreaker filters are applied before L2-normalisation to a unit vector.
+
+    \item \textbf{O*NET career matching.} The normalised RIASEC vector is compared against precomputed O*NET occupation interest profiles stored in Supabase pgvector using cosine similarity. The top 10--15 occupations form the student's internal career space used for skill aggregation in Stage~3 --- the jobs that people with similar interest profiles report finding satisfying. Of these, the top 7 are surfaced to the student in the Career Explorer (UC-06). O*NET's interest profiles are empirically derived from surveys of employed workers, making this step grounded in real-world data rather than a heuristic mapping.
+
+    \item \textbf{Target skill set derivation.} Each occupation in the career shortlist contributes its O*NET skill requirements, weighted by its similarity score from Stage~2. Skills appearing across many matched occupations receive higher aggregate weight, producing a ranked target skill set expressed in O*NET's standardised skill taxonomy.
+
+    \item \textbf{Skill taxonomy mapping and KU program ranking via Neo4j.} The O*NET skill names in the target skill set are mapped to SkillCluster nodes in Neo4j using a predefined crosswalk table (this mapping is manually maintained and is a source of approximation --- see Section~\ref{section:limitations}). Neo4j is then queried for KU programs whose PLOs develop the highest-weighted SkillCluster nodes. A final fit score is computed as the cosine similarity between the aggregated SkillCluster weight vector and each program's PLO skill profile. The top-$N$ programs are selected for ranking.
+
+    \item \textbf{Explanation generation.} The top-$N$ ranked programs, together with the matched O*NET occupations and their connecting skill chains, are passed to Gemini 2.5 Flash as structured context. Gemini generates a plain-language explanation for each program structured around the full reasoning chain: interest $\rightarrow$ career $\rightarrow$ skill $\rightarrow$ PLO $\rightarrow$ program. Explanations are generated in Thai or English depending on the student's language setting.
+
+    \item \textbf{Behavioural re-ranking (registered users only).} For registered users with accumulated interaction data, the RIASEC fit scores from Stage~4 are blended with a behavioural fit score derived from the individual student's own interaction history (not from other users --- true collaborative filtering across students is deferred to Phase~2). The blend ratio is controlled by $\alpha$: new users start at $\alpha = 1.0$ (pure RIASEC); $\alpha$ decays toward 0.2 as interaction weight accumulates according to the threshold schedule documented in UC-07 (3--5 meaningful signals $\rightarrow$ $\alpha \approx 0.5$; regular user $\rightarrow$ $\alpha \approx 0.2$). The final ranking score is:
+    \[\text{score} = \alpha \times \text{RIASEC fit} + (1 - \alpha) \times \text{behavioural fit}\]
+    Guest interaction signals are session-scoped and do not update $\alpha$; guests always begin a new session at $\alpha = 1.0$. Fallback hierarchy when behavioural data is sparse: (1) sufficient interaction history $\rightarrow$ normal blended signal; (2) limited interaction history $\rightarrow$ $\alpha$ held higher; (3) no interaction history $\rightarrow$ pure RIASEC ($\alpha = 1.0$). Interaction weights are documented in UC-07.
+\end{enumerate}
 
 \section{AI and Data Design}
 \label{section:ai-data-design}
 
 \subsection{Data Sources and Collection}
-<TIP: Describe where your data comes from. Is it collected from users,
-scraped from the web, sourced from a public dataset, or
-provided by an external API?
-Explain how much data you have or plan to collect,
-and any challenges you anticipate in obtaining it.
-Explain how data is cleaned, transformed, or prepared before use. />
+\label{subsection:data-sources}
+
+\begin{itemize}[leftmargin=80pt]
+    \item \textbf{KU curriculum documents (มคอ.2):} Provided directly by KU faculty advisors for all KU programs. Thai-language PDFs of varying length (typically 20--80 pages per program). These are the primary knowledge base for both the RAG pipeline and the PLO extraction pipeline. Documents are version-tagged by academic year and re-ingested when updated.
+
+    \item \textbf{O*NET occupational database \cite{onet2024}:} Publicly available from the US Department of Labor. Contains two data layers used by KUru: (a) \textit{Interests} --- the RIASEC profile for each occupation, derived from surveys of employed workers, used for career matching from the student's RIASEC vector; and (b) \textit{Skills} --- 35 standardized skills per occupation with importance and level scores, used to derive the target skill set that drives Neo4j program queries. Downloaded as structured data (CSV/JSON). Occupation titles are mapped to Thai equivalents for student-facing display; skill and interest data are used directly as the underlying structure is language-independent.
+
+    \item \textbf{TCAS admission data:} Provided directly by KU faculty advisors. Structured into a per-faculty, per-round schema covering quotas, eligibility criteria, score requirements, and deadlines. Updated manually at the start of each TCAS cycle and version-tagged by year.
+
+    \item \textbf{Interaction log:} Generated by the system as registered users engage with KUru. Stored in Supabase PostgreSQL. Records program saves, card expansions, TCAS guide views, chatbot queries, and card views, each with a timestamp, interaction weight, and associated program identifier. Used to compute the behavioural fit score in Stage~6 of the recommendation pipeline. A background recomputation job updates collaborative scores periodically as new interaction data accumulates.
+\end{itemize}
+
+Data preprocessing for มคอ.2 documents involves: (1) text extraction from PDF using PyMuPDF; (2) section-aware chunking (PLO sections, course descriptions, and learning outcomes are chunked separately to preserve semantic coherence); (3) embedding generation using Gemini text-embedding-001; (4) storage in Supabase pgvector with metadata tags for faculty, program, document version, and section type.
+
 \subsection{Model Design}
-<TIP: Describe the AI model or external AI service you plan to use.
-Explain why you chose it over alternatives.
-This can connect back to your competitor or literature review in Chapter 2.
-If you are training your own model, describe the architecture and
-training approach. If you are using a third-party model or API,
-describe how it is integrated into your system and any prompt design
-or fine-tuning involved. />
+\label{subsection:model-design}
+
+The primary language model is Gemini 2.5 Flash, selected for its strong Thai language performance, native PDF document understanding, 1M token context window, and cost efficiency relative to GPT-4o. Direct Gemini API calls are used without LangChain or similar orchestration frameworks, to reduce latency and maintain explicit control over prompt structure.
+
+Embeddings use Gemini text-embedding-001, a multilingual model that produces consistent semantic representations for both Thai and English text, enabling cross-language retrieval where a Thai query can retrieve an English document chunk and vice versa.
+
+The Neo4j knowledge graph uses a schema with four node types: Faculty, PLO, SkillCluster, and Career. Edges represent: Faculty -[HAS\_PLO]$\rightarrow$ PLO, PLO -[DEVELOPS]$\rightarrow$ SkillCluster, Career -[REQUIRES]$\rightarrow$ SkillCluster. This schema supports the multi-hop queries required for recommendation: given a student's SkillCluster profile, find Faculties whose PLOs develop those clusters.
+
+The interest discovery interface uses a five-step adaptive elicitation flow grounded in Holland's RIASEC model \cite{holland1997}. Step~1 presents eight RIASEC-mapped topic tiles; each tile is assigned a primary and secondary RIASEC weight (e.g.\ \textit{Computers \& Digital} contributes Investigative (0.8) and Realistic (0.5); \textit{Arts \& Design} contributes Artistic (0.9) and Enterprising (0.4)). Step~2 presents 4--6 adaptive pairwise forced-choice questions targeting only the RIASEC dimensions that remain ambiguous after Step~1 --- adjacent dimensions with similar accumulated weight. Step~3 presents one image-based scenario question for non-verbal confirmation of the dominant signal. Step~4 applies an optional dealbreaker filter: any RIASEC dimensions the student explicitly rejects are zeroed out regardless of their computed weight. Step~5 applies a confidence scalar: answers the student flags as uncertain contribute at reduced weight. The final 6-dimensional RIASEC vector is L2-normalised and used as input to the O*NET career matching pipeline. The full tile-to-RIASEC weight mapping is documented in Appendix~\ref{appendix:A}.
+
+The recommendation ranking blends the RIASEC-derived fit score with a behavioural fit score using a blending weight $\alpha$ that decays automatically as the student accumulates interaction data: new users start at $\alpha = 1.0$ (pure RIASEC); regular users converge toward $\alpha \approx 0.2$ (behaviour-dominated). Interaction signals are weighted by type: program save (1.0), TCAS guide viewed (0.8), chatbot query about a program (0.6), card expanded (0.4), card viewed (0.1).
+
+The baseline for comparison is BM25 keyword retrieval over the same มคอ.2 corpus without embedding or LLM generation. The full RIASEC-to-topic mapping is documented in Appendix~\ref{appendix:A}.
+
 \subsection{Evaluation}
-<TIP: Describe the metrics you plan to use to evaluate your AI model. />
+\label{subsection:evaluation}
+
+\begin{itemize}[leftmargin=80pt]
+    \item \textbf{RAG pipeline quality:} RAGAS framework metrics \cite{es2023ragas} --- Faithfulness (proportion of claims in the answer supported by retrieved context), Answer Relevancy (semantic similarity between answer and question), Context Recall (proportion of relevant information retrieved). Target: Faithfulness $>$ 0.80, Answer Relevancy $>$ 0.75.
+
+    \item \textbf{Recommendation quality:} Mean Reciprocal Rank (MRR) and NDCG@5 evaluated on a manually curated test set of 30--50 student interest profiles with ground-truth faculty matches validated by faculty advisors or senior students. Target: MRR $>$ 0.60.
+
+    \item \textbf{User experience:} Task completion rate and System Usability Scale (SUS) score from user testing with 10--15 high school students or KU first-year students. Target: SUS score $>$ 70 (acceptable).
+\end{itemize}

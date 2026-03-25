@@ -3,11 +3,27 @@
 
 \section{Software Solution}
 \label{section:software-solution}
-<TIP: Share a link to your Github repository. Showcase screenshots
-of the application and briefly describe each page here. />
+
+\begin{figure}[h]
+    \centering
+    \fbox{\parbox{0.9\textwidth}{\centering\vspace{1em}
+    \textit{[GitHub repository link to be added. Screenshots of each application screen to be included upon completion.]}
+    \vspace{1em}}}
+    \caption{Application Screenshots}
+    \label{fig:app-screenshots}
+\end{figure}
+
+The delivered software will include: a deployed web application accessible at a public URL; the data ingestion pipeline for มคอ.2 PDF processing; the Neo4j knowledge graph populated with all KU programs; the RAG pipeline and recommendation engine; and the six core MVP features described in Chapter~\ref{chap:introduction}.
 
 \section{Test Report}
 \label{section:test-report}
-<TIP: Describe how you test your project. Place a test report here.
-If you use continuous integration and deployment (CI/CD) tools, describe your
-CI/CD method here. />
+
+Testing will cover three levels:
+
+\begin{itemize}[leftmargin=80pt]
+    \item \textbf{Unit tests:} Core AI functions (chunking, embedding, retrieval, graph query) tested with pytest. Coverage target: 70\% of backend functions.
+
+    \item \textbf{Integration tests:} End-to-end API tests for each major user flow (interest discovery to recommendation, chatbot query to grounded response). Run automatically on each pull request via GitHub Actions.
+
+    \item \textbf{User tests:} Manual usability testing sessions with 10--15 participants, using a structured task script and SUS questionnaire. Results tabulated and reported in the test report.
+\end{itemize}

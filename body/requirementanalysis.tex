@@ -4,81 +4,120 @@
 \section{Stakeholder Analysis}
 \label{section:stakeholder-analysis}
 
-Stakeholders are individuals, groups, or entities that have an interest, concern, or stake in the KUru system --- they can affect or be affected by the system's outputs and operation. Four primary stakeholders have been identified:
+\begin{itemize}[leftmargin=80pt]
+    \item \textbf{High school students (prospective KU applicants):} Primary users. Need personalized program recommendations, PLO-based skill previews, career path information, and structured TCAS guidance. Low technical proficiency expected; interface must be accessible and engaging.
 
-\begin{table}[htbp]
-\centering
-\small
-\renewcommand{\arraystretch}{1.4}
-\caption{Stakeholder Analysis}
-\begin{tabularx}{\textwidth}{|p{3cm}|X|X|}
-\hline
-\textbf{Stakeholder} & \textbf{Role / Interest} & \textbf{Concern / Impact} \\
-\hline
-KU CPE / SKE Students (Year 1--4) &
-    Primary users of all five features. They interact with the chatbot, explore PLOs, assess their skills, and generate learning paths. &
-    Accuracy of AI answers, usefulness of career recommendations, relevance of learning paths, and data privacy of self-assessment scores. \\
-\hline
-Faculty Advisor &
-    Provides the official มคอ.2 document, reviews and approves PLO-to-skill mappings in the knowledge graph, and validates the 50-question evaluation test set. &
-    Accuracy of extracted PLO data, correctness of skill taxonomy, and integrity of the knowledge graph before student-facing deployment. \\
-\hline
-Department of Computer Engineering, KU &
-    Institutional owner of the curriculum. Benefits from a system that improves student curriculum engagement and supports OBE accreditation evidence. &
-    PDPA compliance, data security, reputational risk from incorrect AI-generated curriculum information. \\
-\hline
-Development Team (Project Authors) &
-    Responsible for designing, building, testing, and deploying the system within the 4-month project timeline. &
-    Technical feasibility, API cost management within free tiers, meeting the 80\% accuracy target on time. \\
-\hline
-\end{tabularx}
-\end{table}
+    \item \textbf{KU Faculty / Academic Advisors:} Data providers. Provide มคอ.2 curriculum documents and TCAS admission data. Indirect beneficiaries through reduced advising load and better-prepared incoming students.
+
+    \item \textbf{KU Admissions Office:} Indirect stakeholders. Benefit from better-informed applicants and reduced mismatched enrollments.
+
+    \item \textbf{Development Team:} Two SKE students responsible for design, development, and evaluation within one semester.
+\end{itemize}
 
 \section{User Stories and Use Cases}
 \label{section:user-stories-use-cases}
 
-User stories capture what each stakeholder needs from the system. The most critical user stories are expanded into use cases in Section~\ref{subsection:key-use-cases}.
-
-\subsection{Student User Stories}
-\label{subsection:student-user-stories}
+\subsection{High School Student User Stories}
+\label{subsection:hs-student-user-stories}
 
 \begin{itemize}[leftmargin=80pt]
-    \item As a first-year student, I want to ask what PLO3 means in plain language, so that I understand what skills I am expected to develop during my degree.
+    \item As a high school student, I want to discover which KU programs match my interests so that I can make an informed TCAS application.
 
-    \item As a third-year student, I want to see which skills I currently lack compared to the Software Developer career requirements, so that I can choose electives that close those gaps.
+    \item As a high school student, I want to see what skills I will graduate with from a specific program so that I can assess whether it aligns with my career goals.
 
-    \item As a final-year student, I want to generate a personalised learning path toward my target career, so that I can identify and address any remaining skill gaps before graduation.
+    \item As a high school student, I want to understand the TCAS admission requirements for a program I am interested in so that I know what I need to prepare.
 
-    \item As a student, I want every chatbot answer to cite the specific มคอ.2 page it came from, so that I can verify the information myself.
+    \item As a high school student, I want to ask questions about a program's curriculum in Thai so that I can get specific answers without reading long PDF documents.
 
-    \item As a student, I want to update my self-assessment skill scores and see my radar chart update immediately, so that I can track my progress over time.
+    \item As a high school student, I want to save programs I am considering so that I can return to compare them later.
 \end{itemize}
 
-\subsection{Faculty Advisor User Stories}
-\label{subsection:advisor-user-stories}
+\subsection{Additional User Stories}
+\label{subsection:additional-user-stories}
 
 \begin{itemize}[leftmargin=80pt]
-    \item As a faculty advisor, I want to review and approve the PLO-to-skill mappings before they are made available to students, so that I can ensure the knowledge graph reflects the intended curriculum design.
+    \item As a returning visitor, I want my saved RIASEC interest profile and bookmarked programs to be available when I come back so that I do not have to start over.
 
-    \item As a faculty advisor, I want to validate the 50-question chatbot test set so that the accuracy evaluation reflects real curriculum questions that students would ask.
+    \item As a parent, I want to browse KU programs and understand what careers they lead to so that I can support my child's decision.
 \end{itemize}
 
 \subsection{Key Use Cases}
 \label{subsection:key-use-cases}
 
-\noindent\textbf{UC-01: Ask a Curriculum Question (Chatbot)}
+\noindent\textbf{UC-01: Discover Interests}
 
-\noindent\textit{Actor:} Student
+\noindent\textit{Actor:} Guest / High School Student
 
-\noindent\textit{Precondition:} มคอ.2 document has been ingested and indexed in pgvector.
+\noindent\textit{Precondition:} None --- accessible without login.
+
+\noindent\textit{Main Flow:}
+\begin{enumerate}[leftmargin=80pt]
+    \item Student opens KUru and selects from 8 RIASEC-mapped topic tiles to establish an initial orientation across Holland's six interest dimensions.
+    \item System identifies which adjacent RIASEC dimensions remain ambiguous from Step~1 and presents 4--6 adaptive pairwise forced-choice questions, each comparing two dimensions the student has not yet clearly distinguished. Students with a clear initial profile receive fewer questions.
+    \item Student views a single image-based scenario question that confirms the dominant RIASEC signal from Steps~1 and~2 using a non-verbal response.
+    \item Student optionally marks topic areas they definitely do not want (dealbreaker filter). Programs dominated by those areas are excluded from recommendations regardless of fit score.
+    \item Student indicates how certain they feel about their answers. Uncertain answers receive proportionally lower weight in the RIASEC vector.
+    \item System constructs a weighted 6-dimensional RIASEC vector from all five inputs using the predefined topic-to-RIASEC mapping table (Appendix~\ref{appendix:A}) and L2-normalises it.
+    \item System identifies the student's two dominant RIASEC types, forming a two-letter Holland Code (e.g., IR for Investigative-Realistic) used as a human-readable label for the student's interest profile.
+    \item System displays an animated RIASEC interest profile summary --- a radar chart showing the student's RIASEC profile --- before proceeding to recommendations.
+\end{enumerate}
+
+\noindent\textit{Alternative Flow --- Targeted re-elicitation:} If invoked from UC-02 with specific RIASEC dimensions flagged for clarification, the system skips Step~1 and begins directly at Step~2, presenting only pairwise questions targeting the flagged dimensions. Steps~3--5 run normally. This path is triggered when the student selects ``No'' on the profile correction prompt in UC-02.
+
+\noindent\textit{Postcondition:} Student has a RIASEC-grounded interest profile used as input to the career matching and program recommendation pipeline. Total elicitation time is 2--4 minutes.
+
+\vspace{1ex}
+\noindent\textbf{UC-02: View Program Recommendations}
+
+\noindent\textit{Actor:} Guest / High School Student
+
+\noindent\textit{Precondition:} Interest profile (RIASEC vector) has been built via UC-01.
+
+\noindent\textit{Main Flow:}
+\begin{enumerate}[leftmargin=80pt]
+    \item System queries precomputed O*NET occupation interest profiles stored in Supabase pgvector for the occupations with the highest cosine similarity to the student's RIASEC vector.
+    \item System derives a target skill set by aggregating O*NET skill requirements across the top matched occupations, weighted by similarity score.
+    \item System maps the target skill set from O*NET taxonomy to SkillCluster nodes in Neo4j using the predefined crosswalk table.
+    \item System queries Neo4j for KU programs whose PLOs develop the highest-weighted SkillCluster nodes.
+    \item System computes a fit score for each program as the cosine similarity between the student's SkillCluster weight vector and the program's PLO skill profile.
+    \item System displays ranked program cards, each showing the fit score, the career paths that motivated the recommendation, and a plain-language explanation generated by Gemini grounded in the O*NET-to-PLO chain.
+    \item Student can tap any card to expand into full program detail.
+    \item System presents a profile correction prompt --- ``Do these recommendations feel right?'' --- on the first visit to the recommendation screen. If the student selects ``No'', the system returns them to a targeted re-elicitation of the RIASEC dimensions most influential in the current ranking, preventing a poor initial vector from entering the interaction log.
+\end{enumerate}
+
+\noindent\textit{Postcondition:} Student sees a ranked list of KU programs with recommendations traceable from their interests through real-world careers to specific program outcomes.
+
+\vspace{1ex}
+\noindent\textbf{UC-03: Explore PLO Spider Chart}
+
+\noindent\textit{Actor:} Guest / High School Student
+
+\noindent\textit{Precondition:} A program card is selected.
+
+\noindent\textit{Main Flow:}
+\begin{enumerate}[leftmargin=80pt]
+    \item Student selects a KU program from the recommendation list.
+    \item System retrieves PLO data from Supabase and skill mappings from Neo4j.
+    \item System renders an interactive radar (spider) chart showing the skill profile the program develops.
+    \item Student's interest profile is overlaid on the chart for visual fit comparison.
+\end{enumerate}
+
+\noindent\textit{Postcondition:} Student has a visual understanding of the skills a program builds and how well its PLO skill profile aligns with their RIASEC interest vector.
+
+\vspace{1ex}
+\noindent\textbf{UC-04: Query Curriculum Chatbot}
+
+\noindent\textit{Actor:} Guest / High School Student
+
+\noindent\textit{Precondition:} มคอ.2 documents have been ingested and indexed in Supabase pgvector.
 
 \noindent\textit{Main Flow:}
 \begin{enumerate}[leftmargin=80pt]
     \item Student enters a question in Thai or English in the chat interface.
-    \item System embeds the query using Gemini text-embedding-004.
-    \item System retrieves the top-5 most semantically relevant curriculum chunks from pgvector.
+    \item System embeds the query using Gemini text-embedding-001.
+    \item System retrieves the top semantically relevant มคอ.2 document chunks from pgvector.
     \item System passes the chunks and question to Gemini 2.5 Flash with a strict citation instruction.
-    \item System displays the generated answer with an inline มคอ.2 page citation badge.
+    \item System displays the generated answer with inline มคอ.2 source citation badges.
 \end{enumerate}
 
 \noindent\textit{Alternative Flow:} If no relevant chunk is found, the system responds: ``This information was not found in the curriculum document.''
@@ -86,136 +125,117 @@ User stories capture what each stakeholder needs from the system. The most criti
 \noindent\textit{Postcondition:} Student has received a cited answer grounded in the official curriculum document.
 
 \vspace{1ex}
-\noindent\textbf{UC-02: Explore a PLO in Plain Language}
+\noindent\textbf{UC-05: View TCAS Admission Guide}
 
-\noindent\textit{Actor:} Student
+\noindent\textit{Actor:} Guest / Registered User
 
-\noindent\textit{Precondition:} PLO data has been extracted and stored in Supabase and Neo4j.
+\noindent\textit{Precondition:} TCAS admission data has been collected and structured per faculty and round.
 
 \noindent\textit{Main Flow:}
 \begin{enumerate}[leftmargin=80pt]
-    \item Student navigates to the PLO Explainer page.
-    \item Student selects a PLO (e.g., PLO3) from the list.
-    \item System retrieves the PLO record from Supabase and the associated skills from Neo4j.
-    \item System displays: (a) a one-sentence plain-language summary, (b) a concrete real-world example, (c) the original Thai text with page reference, and (d) the linked skill nodes.
+    \item Student navigates to the TCAS Guide for a faculty they are interested in.
+    \item System displays a structured breakdown of applicable rounds, score requirements (GPAX, TGAT/TPAT/A-Level), portfolio criteria, and deadlines.
+    \item Student can filter by round and view side-by-side comparisons of faculties.
 \end{enumerate}
 
-\noindent\textit{Postcondition:} Student understands what the PLO means in practical terms and what skills it requires.
+\noindent\textit{Postcondition:} Student understands the specific admission requirements they need to prepare for.
 
 \vspace{1ex}
-\noindent\textbf{UC-03: View Skill Map and Gap Analysis}
+\noindent\textbf{UC-06: Explore Career Paths}
 
-\noindent\textit{Actor:} Student
+\noindent\textit{Actor:} Guest / High School Student
 
-\noindent\textit{Precondition:} Student has a profile in the system; skill taxonomy and PLO-to-skill mappings are stored in Neo4j.
+\noindent\textit{Precondition:} RIASEC interest profile has been built via UC-01.
 
 \noindent\textit{Main Flow:}
 \begin{enumerate}[leftmargin=80pt]
-    \item Student navigates to the Skill Map page.
-    \item Student adjusts sliders to self-assess current skill levels across 16 skills.
-    \item System calculates gaps between self-assessed levels and program target levels from Neo4j.
-    \item System renders a radar chart showing current vs.\ target skill levels.
-    \item System highlights the 2--3 most critical skill gaps with suggested courses to address each.
+    \item Student taps ``ดูอาชีพที่เหมาะกับคุณ'' (View matching careers) from the recommendation screen.
+    \item System retrieves the top 7 O*NET occupations (selected from the 10--15 matched internally during the recommendation pipeline) to display in the career explorer.
+    \item System displays a career list; each card shows the occupation title, a Thai-localised description, the top 3 required skills, and the KU programs that develop those skills.
+    \item Student taps a career card to expand detail.
+    \item System shows the full O*NET skill breakdown (35 standardized skills) and highlights which matched KU programs develop each skill, using Neo4j data.
+    \item Student can navigate directly from a career card to the relevant program card.
 \end{enumerate}
 
-\noindent\textit{Postcondition:} Student has a visual understanding of where their skill profile stands relative to program targets.
+\noindent\textit{Postcondition:} Student understands which careers align with their RIASEC interest profile and which KU programs prepare them for those careers.
 
 \vspace{1ex}
-\noindent\textbf{UC-04: Get Career Match Recommendations}
+\noindent\textbf{UC-07: Refine Profile Through Implicit Signals}
 
-\noindent\textit{Actor:} Student
+\noindent\textit{Actor:} Registered User
 
-\noindent\textit{Precondition:} Student skill levels have been set (via self-assessment); career dictionary and skill requirements are stored in Neo4j.
+\noindent\textit{Precondition:} Student is logged in and has an existing RIASEC profile from UC-01.
 
 \noindent\textit{Main Flow:}
 \begin{enumerate}[leftmargin=80pt]
-    \item Student navigates to the Career Match page.
-    \item System queries Neo4j to compute a match percentage for each career role based on the student's current skill levels.
-    \item System ranks and displays the top 3--5 career matches with: (a) match percentage, (b) skills that already meet career requirements, and (c) specific skills still needed.
-    \item Student can click any career card to see a Gemini-generated plain-language explanation of the recommendation.
+    \item Student browses program cards, saves programs, checks TCAS guides, and asks chatbot questions across one or more sessions.
+    \item System records behavioral signals alongside the PLO skill profiles of the associated programs, weighted by interaction type:
+    \begin{itemize}[leftmargin=40pt]
+        \item Program save --- weight 1.0
+        \item TCAS guide viewed --- weight 0.8
+        \item Chatbot query about a program --- weight 0.6
+        \item Program card expanded --- weight 0.4
+        \item Program card viewed --- weight 0.1
+    \end{itemize}
+    \item System adjusts a blending weight $\alpha$ based on accumulated interaction data. A new user starts at $\alpha = 1.0$ (pure RIASEC-based recommendations). As interaction weight accumulates across 3--5 meaningful signals, $\alpha$ decays toward 0.2, shifting the ranking progressively toward behavioural signal. The transition is smooth and invisible to the student. At each session, the recommendation ranking is computed as:
+    \[\text{score} = \alpha \times \text{RIASEC fit score} + (1 - \alpha) \times \text{behavioural fit score}\]
+    \item On the next session, the recommendation ranking reflects the updated blended profile.
+    \item Student can view a summary of how their recommendation ranking has shifted under ``โปรไฟล์ของคุณ'' on the saved profile dashboard, including a before/after comparison of the highest-ranked programs.
 \end{enumerate}
 
-\noindent\textit{Postcondition:} Student understands which careers they are most aligned with and exactly what skills they need to develop to reach their target career.
+\noindent\textit{Alternative Flow:} Student disagrees with the ranking shift and taps ``รีเซ็ตโปรไฟล์'' to clear accumulated interaction data and return to pure RIASEC recommendations ($\alpha = 1.0$).
+
+\noindent\textit{Note on guest users:} Interaction signals are only logged persistently for registered users. Guest interactions are tracked within the current session only and do not update $\alpha$ across visits. Guests always begin a new session at $\alpha = 1.0$ (pure RIASEC recommendations).
+
+\noindent\textit{Postcondition:} Recommendation ranking becomes progressively more personalised to the student's actual behaviour without requiring additional questionnaire steps. The underlying RIASEC vector from elicitation remains fixed; the behavioural fit score is derived from the individual student's own interaction history (not from other users) and operates as a separate signal blended at ranking time via $\alpha$. True collaborative filtering --- using patterns from students with similar profiles --- is deferred to Phase~2 (see Section~\ref{section:future-work}).
 
 \vspace{1ex}
-\noindent\textbf{UC-05: Generate a Personalised Learning Path}
+\noindent\textbf{UC-08: Explain Why a Program Was Recommended}
 
-\noindent\textit{Actor:} Student
+\noindent\textit{Actor:} Guest / High School Student
 
-\noindent\textit{Precondition:} Career Match has been viewed; student has selected a target career.
+\noindent\textit{Precondition:} Student is viewing a program recommendation card.
 
 \noindent\textit{Main Flow:}
 \begin{enumerate}[leftmargin=80pt]
-    \item Student selects a target career from the Career Match page.
-    \item System queries Neo4j for the skill gaps between the student's current levels and the career's required levels.
-    \item System generates an ordered list of recommended courses, electives, and activities that close each gap.
-    \item Each step is tagged with the PLO it addresses, so the student can see how each action connects back to the curriculum's intended outcomes.
-    \item Student can click ``Generate with AI'' to receive a Gemini-generated personalised narrative path.
+    \item Student taps ``ทำไมถึงแนะนำคณะนี้?'' (Why was this recommended?) on any program card.
+    \item System retrieves the full reasoning chain: student RIASEC vector $\rightarrow$ matched O*NET occupations $\rightarrow$ aggregated skill requirements $\rightarrow$ PLO matches $\rightarrow$ program.
+    \item System generates a plain-language explanation via Gemini, structured as: ``Based on your interest in [topic], you match careers like [Y] and [Z]. These careers require skills like [A] and [B]. This program develops both through its PLOs.''
+    \item Student can tap any career name in the explanation to navigate to its full detail in UC-06.
 \end{enumerate}
 
-\noindent\textit{Postcondition:} Student has an actionable, ordered roadmap from their current skill profile to their target career.
+\noindent\textit{Postcondition:} Student understands the specific chain of reasoning behind a recommendation and can verify each step themselves.
 
 \section{Use Case Diagram}
 \label{section:use-case-diagrams}
 
-The use case diagram below illustrates all actors and their relationships to the five primary use cases of the KUru system. The Student actor interacts with all five features directly. The Faculty Advisor actor interacts with the system during the data preparation and validation phase (pre-deployment) rather than through the student-facing UI.
+\begin{figure}[h]
+    \centering
+    \fbox{\parbox{0.9\textwidth}{\centering\vspace{1em}
+    \textit{[Figure placeholder: UML Use Case Diagram showing Guest and Registered User actors. Guest: Discover Interests, View Program Recommendations, Explore PLO Chart, Explore Career Paths, Query Curriculum Chatbot, View TCAS Guide, Explain Recommendation. Registered User (extends Guest): Save Profile, Track TCAS Deadlines, Refine Profile Through Implicit Signals, Reset Profile.]}
 
-\begin{table}[htbp]
-\centering
-\small
-\renewcommand{\arraystretch}{1.4}
-\caption{Use Case Diagram (Schematic)}
-\begin{tabularx}{\textwidth}{|p{2.5cm}|X|p{3.5cm}|}
-\hline
-\textit{«Actor»} \textbf{Student} &
-    UC-01 Ask a Curriculum Question (Chatbot) \newline
-    UC-02 Explore PLO in Plain Language \newline
-    UC-03 View Skill Map and Gap Analysis \newline
-    UC-04 Get Career Match Recommendations \newline
-    UC-05 Generate Personalised Learning Path &
-    \textit{«Actor»} \textbf{Faculty Advisor} \newline
-    UC-06 Review \& Approve PLO--Skill Mappings \\
-\hline
-\multicolumn{3}{|l|}{\textbf{KUru System}} \\
-\hline
-\end{tabularx}
-\end{table}
-
-\noindent\textit{Note: A formal UML diagram will be produced using draw.io and included in the final submission.}
+    \vspace{1em}}}
+    \caption{KUru Use Case Diagram}
+    \label{fig:use-case-diagram}
+\end{figure}
 
 \section{User Interface Design}
 \label{section:user-interface-design}
 
-KUru's interface follows a single-page application pattern with a persistent left navigation sidebar and a main content area. The design prioritises clarity and information density appropriate for academic users. The interface was prototyped as an interactive AI-powered mock (built with Next.js components) and validated with five KU CPE students during the requirements phase.
-
-\subsection{Navigation Structure}
-\label{subsection:navigation-structure}
-
-The application is divided into five primary screens, accessible via the sidebar:
-
-\begin{enumerate}[leftmargin=80pt]
-    \item \textbf{Curriculum Chatbot:} Conversational interface with quick-chip suggested questions, chat history, and inline citation badges on every AI response.
-
-    \item \textbf{PLO Explainer:} Grid of PLO cards, each expandable to reveal plain-language summary, real-world example, original Thai text, and linked skill pills.
-
-    \item \textbf{Skill Map:} Split view with a radar chart on the left and skill sliders with gap badges on the right. Updates in real time as sliders are adjusted.
-
-    \item \textbf{Career Match:} Grid of career cards showing match percentage bar, explanation, and skill gap list. Each card has an AI explain button powered by Gemini.
-
-    \item \textbf{Learning Path:} Dropdown to select a target career, followed by a vertical timeline of recommended courses tagged with PLOs. ``Generate with AI'' button produces a Gemini-narrated personalised path.
-\end{enumerate}
-
-\subsection{Key UI Design Decisions}
-\label{subsection:ui-design-decisions}
+The interface follows a mobile-first web design using Next.js, Tailwind CSS, and Shadcn/UI. Key screens include:
 
 \begin{itemize}[leftmargin=80pt]
-    \item \textbf{Citation as first-class UI element:} Every chatbot answer displays the มคอ.2 page citation as a highlighted badge (amber background) inline with the answer text --- not in a footnote --- making source verification immediately visible.
+    \item \textbf{Landing page:} Value proposition with two entry paths (interest discovery for undecided students; career search for students with a goal in mind). Bilingual Thai/English throughout.
 
-    \item \textbf{Radar chart with real-time updates:} The skill radar chart re-renders on every slider change rather than on form submission, giving students immediate visual feedback and encouraging exploration.
+    \item \textbf{Interest discovery:} RIASEC-mapped topic grid (8 topics representing Holland's six interest dimensions) for multi-select, followed by one structured follow-up question. Progress indicator. Results in an animated RIASEC profile summary before recommendations are shown.
 
-    \item \textbf{Explainability over opacity:} Career match percentages are always accompanied by a breakdown of which skills already meet requirements and which do not. A percentage alone is never displayed without its explanation.
+    \item \textbf{Program explorer:} Ranked faculty cards with fit score and the O*NET career paths that motivated the recommendation. Tap to expand into PLO spider chart, course overview, and ``Why was this recommended?'' explanation chain. On first visit, includes a profile correction prompt (``Do these feel right?'') that returns the student to targeted re-elicitation if they disagree with the ranking.
 
-    \item \textbf{Bilingual support:} All chatbot interactions accept Thai and English input. The system detects the language of the query and responds in the same language.
+    \item \textbf{Career explorer:} List of O*NET occupations matched to the student's RIASEC profile. Each card shows Thai-localised title, required skills, and links to the KU programs that develop them.
 
-    \item \textbf{Progressive disclosure in PLO Explainer:} PLO cards show only the title and skill pills by default. The full three-layer explanation is revealed on click, preventing information overload for first-year students while providing depth for advanced users.
+    \item \textbf{TCAS guide:} Faculty-specific breakdown of applicable rounds, score requirements, portfolio criteria, and deadlines.
+
+    \item \textbf{Curriculum chatbot:} Conversational interface supporting Thai and English queries, with source citations from มคอ.2 documents.
+
+    \item \textbf{Saved profile dashboard:} Bookmarked programs, TCAS deadline tracker, interest profile summary. Requires login.
 \end{itemize}
