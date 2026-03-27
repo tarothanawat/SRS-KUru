@@ -21,9 +21,9 @@
 
     \item \textbf{CLO-level mapping:} The system uses program-level PLO data (มคอ.2) only. Course-level CLO data (มคอ.3) is not ingested, as features requiring CLO mapping (e.g., skill progress tracking for enrolled students) are out of scope for this project.
 
-    \item \textbf{O*NET Thai career mapping:} O*NET occupational data is in English and uses US career taxonomy. Manual mapping to Thai career titles and KU graduate employment patterns is required and introduces approximation.
+    \item \textbf{O*NET Thai career mapping:} O*NET data is in English and uses US career taxonomy. Occupation titles are mapped to Thai equivalents for student-facing display in the Career Explorer. O*NET skill data is used for Career Explorer display only --- the recommendation ranking pipeline uses direct curriculum-side matching via Neo4j and pgvector rather than routing through O*NET skill taxonomy, eliminating the vocabulary mismatch that affected the previous design. Residual approximation exists in the RIASEC-to-SkillCluster weight mapping used in Pipeline~B1.
 
-    \item \textbf{Portfolio scorer:} Designed and documented but not implemented in the MVP due to data dependency on structured per-faculty portfolio rubrics from the admissions office.
+    \item \textbf{Portfolio checker scope:} The portfolio readiness checker is implemented for the top 10 most popular KU programs in the MVP. Full coverage of all KU programs accepting Round~1 or Round~2 portfolio applications is deferred to Phase~2 pending criteria document availability from all remaining faculties. The checker evaluates structured portfolio content --- activity records, certificates, transcripts, and personal statement presence. It does not evaluate creative work quality. It provides preparation guidance, not admission probability prediction.
 
     \item \textbf{Evaluation ground truth:} The MRR evaluation test set is manually curated with limited size (30--50 profiles), which constrains the statistical reliability of the recommendation quality metrics.
 
@@ -38,13 +38,13 @@
 \begin{itemize}[leftmargin=80pt]
     \item \textbf{KU enrolled student features (Phase 2):} Once the pre-admission system is validated, extend scope to serve currently enrolled KU students. This would require มคอ.3 CLO ingestion, a course enrollment interface, and a skill gap dashboard. The current knowledge graph schema is designed to support this extension without architectural changes.
 
-    \item \textbf{Portfolio scorer:} Build the AI-assisted portfolio evaluation feature once structured admission rubrics are available from the KU admissions office.
+    \item \textbf{Portfolio checker full coverage (Phase~2):} The MVP portfolio readiness checker covers the top 10 most popular KU programs. Extension to all KU programs accepting Round~1 or Round~2 portfolio applications requires criteria documents from all remaining faculties and is deferred to Phase~2.
 
     \item \textbf{Automated TCAS data refresh:} Monitor mytcas.com for changes each TCAS cycle and automatically notify the data administrator when updates are detected, triggering a review and re-ingestion cycle with KU faculty.
 
     \item \textbf{Thai career taxonomy alignment:} Develop a systematic mapping between O*NET occupations and THACO (Thai Standard Occupational Classification) to improve career recommendation accuracy for Thai students.
 
-    \item \textbf{True collaborative filtering (Phase 2):} The current MVP implements single-user behavioural blending --- the $\alpha$ mechanism in UC-07 weights each student's \textit{own} interaction history against their initial RIASEC scores. True collaborative filtering --- using interaction patterns of students with similar RIASEC profiles to inform each other's recommendations --- requires a critical mass of user data and is deferred to Phase~2. The $\alpha$ integration point in Stage~6 of the recommendation pipeline is designed to accommodate this extension without architectural changes. A prerequisite is robust handling of \textit{profile pollution}: a poor initial RIASEC vector clusters a student incorrectly, degrading the collaborative signal for all students in that cluster. The five-step adaptive elicitation in UC-01 is designed to reduce this risk before true collaborative filtering is introduced.
+    \item \textbf{True collaborative filtering (Phase 2):} The current MVP implements single-user behavioural blending --- the $\alpha$ mechanism in UC-07 weights each student's \textit{own} interaction history against their initial RIASEC scores. True collaborative filtering --- using interaction patterns of students with similar RIASEC profiles to inform each other's recommendations --- requires a critical mass of user data and is deferred to Phase~2. The $\alpha$ integration point in Stage~5 of the recommendation pipeline is designed to accommodate this extension without architectural changes. A prerequisite is robust handling of \textit{profile pollution}: a poor initial RIASEC vector clusters a student incorrectly, degrading the collaborative signal for all students in that cluster. The five-step adaptive elicitation in UC-01 is designed to reduce this risk before true collaborative filtering is introduced.
 
     \item \textbf{Longitudinal evaluation:} Track recommendation quality by following up with admitted students after one year to assess whether their actual program experience matched the system's prediction.
 \end{itemize}

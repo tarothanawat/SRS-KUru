@@ -51,7 +51,7 @@ The core AI architecture combines a RAG pipeline over มคอ.2 curriculum doc
 
 1. **Interest Discovery:** A five-step adaptive elicitation interface grounded in Holland's RIASEC vocational model: (1) eight RIASEC-mapped topic tiles for initial orientation; (2) 4–6 adaptive pairwise forced-choice questions targeting only RIASEC dimensions left ambiguous by Step 1; (3) one image-based scenario question confirming the dominant signal non-verbally; (4) an optional dealbreaker filter removing unwanted domains from all recommendations regardless of fit score; (5) a confidence check weighting uncertain answers proportionally lower. Output is a normalised 6-dimensional RIASEC vector. Total time: 2–4 minutes. A blending weight α shifts the system progressively from RIASEC-based to behavioural-signal-based recommendations as interaction data accumulates.
 
-2. **Program Recommendation Engine:** Ranked list of KU programs matched to the student's interest profile, explained in plain language, covering all KU faculties.
+2. **Program Recommendation Engine:** Ranked list of KU programs matched to the student's RIASEC interest profile using a hybrid recommendation architecture combining two independent signals: a career-side signal (Pipeline A) matching the student's RIASEC vector against O\*NET occupation data via pgvector, and a curriculum-side signal (Pipeline B) matching against KU program PLO profiles via Neo4j and course content via pgvector semantic search. Final score = 0.35 × A-score + 0.65 × B-score. Recommendations explained in plain language covering the full chain from interests to career alignment to curriculum fit. MVP scope: top 10 programs.
 
 3. **PLO Spider Chart Visualizer:** Interactive radar chart showing the skill profile a student will develop, overlaid with the student's interest profile for visual fit assessment.
 
@@ -60,6 +60,14 @@ The core AI architecture combines a RAG pipeline over มคอ.2 curriculum doc
 5. **TCAS Admission Guide:** Structured per-faculty, per-round admission information including GPAX requirements, TGAT/TPAT/A-Level criteria, portfolio requirements, and deadlines.
 
 6. **Saved Profile Dashboard:** Optional login to persist interest profile, bookmarked programs, and TCAS deadline tracking.
+
+7. **PLO Explorer with Semantic Search:** Browsable and searchable directory of all KU programs. Students can search using natural language queries in Thai or English (e.g., "หลักสูตรที่เรียน AI เน้นโปรเจกต์ รับ TGAT ต่ำ"). Queries parsed into structured constraints (topic areas, teaching methods, TCAS requirements) and matched via multi-source parallel query. Students can pin up to 4 programs to a persistent comparison tray for side-by-side comparison, batch portfolio checking, and multi-program chatbot queries.
+
+8. **Portfolio Readiness Checker:** Student uploads a portfolio PDF; Gemini extracts a structured portfolio profile (activities, certificates, academic records, personal statement). System performs a four-part gap analysis (hard threshold eligibility, required item coverage, preferred item strength, qualitative criteria) against pre-extracted faculty criteria schemas. Output: eligibility status, portfolio strength profile, prioritised gap list, deadline-aware action recommendations. MVP scope: top 10 programs. Excludes programs requiring creative work evaluation.
+
+9. **Curriculum Timeline Visualiser:** For any KU program, shows a visual map of what the student will study across 4 years. Course composition, teaching method breakdown, and time commitment per year extracted from มคอ.2 during ingestion. Gemini synthesises this structured data into natural-language year narratives on demand.
+
+10. **Program Comparison:** Students pin up to 4 programs and compare side-by-side: overlaid PLO radar charts, career path overlap, curriculum character profile across 5 dimensions (theory vs. project, individual vs. team, lab vs. lecture, early specialisation vs. broad foundation, industry connection vs. academic focus), TCAS accessibility per round, and RIASEC fit scores.
 
 ### 1.4 Target Users
 
@@ -142,6 +150,10 @@ The interface design is shaped by three evidence-based principles from the prefe
 
 This work applies established cold-start PE methods and the RIASEC vocational framework to academic pathway advising for Thai university applicants — a novel application context in which the user population (Thai high school students navigating TCAS), the item space (university programs defined by PLOs), and the decision stakes (a multi-year academic commitment) differ substantially from the content recommendation domains in which these methods were originally developed.
 
+### 2.2.4 Hybrid Recommendation Architecture
+
+KUru's recommendation pipeline is a hybrid system combining two independent signals: a knowledge-based signal derived from matching the student's RIASEC vector against O\*NET occupation profiles (Pipeline A), and a content-based signal derived from matching against KU program PLO profiles and course content via Neo4j and pgvector semantic search (Pipeline B). Hybrid recommender systems that combine independent evidence sources consistently outperform single-signal approaches by reducing the error compounding that occurs when one signal feeds sequentially into the next. In the previous single-chain design, an approximation introduced at the O\*NET-to-SkillCluster crosswalk step would propagate through to the final ranking; the parallel architecture eliminates this dependency. The final score weights curriculum-side evidence more heavily (65%) than career-side evidence (35%), reflecting the system's primary purpose: helping students understand what they will actually study at KU, not merely what careers they might eventually pursue.
+
 ---
 
 ## Chapter 3 — Requirement Analysis
@@ -187,15 +199,13 @@ This work applies established cold-start PE methods and the RIASEC vocational fr
 - **Actor:** Guest / High School Student
 - **Precondition:** Interest profile (RIASEC vector) has been built via UC-01
 - **Flow:**
-  1. System queries precomputed O\*NET occupation interest profiles stored in Supabase pgvector for occupations with the highest cosine similarity to the student's RIASEC vector.
-  2. System derives a target skill set by aggregating O\*NET skill requirements across the top matched occupations, weighted by similarity score.
-  3. System maps the target skill set from O\*NET taxonomy to SkillCluster nodes in Neo4j using the predefined crosswalk table.
-  4. System queries Neo4j for KU programs whose PLOs develop the highest-weighted SkillCluster nodes.
-  5. System computes a fit score for each program as cosine similarity between the student's SkillCluster weight vector and the program's PLO skill profile.
-  6. System displays ranked program cards, each showing the fit score, career paths that motivated the recommendation, and a plain-language explanation generated by Gemini grounded in the O\*NET-to-PLO chain.
-  7. Student can tap any card to expand into full program detail.
-  8. System presents a profile correction prompt — "Do these recommendations feel right?" — on the first visit to the recommendation screen. If the student selects "No", the system returns them to a targeted re-elicitation of the RIASEC dimensions most influential in the current ranking, preventing a poor initial vector from entering the interaction log.
-- **Postcondition:** Student sees a ranked list of KU programs with recommendations traceable from their interests through real-world careers to specific program outcomes.
+  1. System runs Pipeline A: queries precomputed O\*NET occupation RIASEC interest profiles in Supabase pgvector for occupations with the highest cosine similarity to the student's RIASEC vector. Top 10–15 form the internal career space. A-score computed per KU program based on career-program pathway alignment.
+  2. System runs Pipeline B concurrently: (B1) queries Neo4j for KU programs whose PLO SkillCluster profiles best match the student's RIASEC-derived SkillCluster weight vector via cosine similarity; (B2) runs semantic search over course description embeddings in Supabase pgvector using the student's interest query. B-score = 0.4 × B1 + 0.6 × B2.
+  3. System synthesises final score: 0.35 × A-score + 0.65 × B-score. Programs ranked by final score. Top 10 selected for display.
+  4. System displays ranked program cards, each showing fit score, matched career paths from Pipeline A, curriculum alignment themes from Pipeline B, and a plain-language explanation generated by Gemini grounded in both signals.
+  5. Student can tap any card to navigate to the full program detail page at `/programs/[program-id]` — a full-page view, not a modal.
+  6. System presents a profile correction prompt — "Do these recommendations feel right?" — on the first visit to the recommendation screen. If the student selects "No", the system returns them to a targeted re-elicitation of the RIASEC dimensions most influential in the current ranking, preventing a poor initial vector from entering the interaction log.
+- **Postcondition:** Student sees a ranked list of KU programs with recommendations traceable from their interests through real-world careers to specific program outcomes via two independent evidence paths.
 
 #### UC-03: Explore PLO Spider Chart
 - **Actor:** Guest / High School Student
@@ -264,17 +274,71 @@ This work applies established cold-start PE methods and the RIASEC vocational fr
   4. Student can tap any career name in the explanation to navigate to its full detail in UC-06.
 - **Postcondition:** Student understands the specific chain of reasoning behind a recommendation and can verify each step themselves.
 
+#### UC-09: Search Programs Semantically
+
+- **Actor:** Guest / High School Student
+- **Precondition:** None — accessible without login
+- **Flow:**
+  1. Student enters a natural language query in Thai or English in the semantic search bar on the PLO Explorer.
+  2. System uses Gemini to parse the query into a structured constraint object: topic areas, teaching methods, TCAS requirements, campus preferences.
+  3. System executes a multi-source parallel query: Neo4j for topic/skill constraints, Supabase for TCAS constraints, pgvector for semantic content matching against course descriptions.
+  4. System returns ranked program cards matching the constraints with explanation of which constraints each program satisfies.
+  5. Student can refine query or apply faceted filters (faculty, program level, TCAS round).
+- **Postcondition:** Student finds programs matching specific criteria without browsing the full catalogue.
+
+#### UC-10: Pin Programs and Compare
+
+- **Actor:** Guest / High School Student
+- **Precondition:** At least 2 programs pinned via pin button on any program card (maximum 4)
+- **Flow:**
+  1. Student pins programs from the explorer or recommendation screen. Pinned programs appear in a persistent tray at the top of the explorer.
+  2. Student taps "เปรียบเทียบ" from the pin tray.
+  3. System generates a side-by-side comparison: overlaid PLO radar charts, career path overlap, curriculum character profiles across 5 dimensions, TCAS accessibility per round, and RIASEC fit scores.
+  4. Student can tap "เช็ค Portfolio ทั้งหมด" to run portfolio gap analysis against all pinned programs simultaneously, showing which program the student is most ready for.
+  5. Student can tap "แชทกับ KUru" to open chatbot with all pinned programs as active context.
+- **Postcondition:** Student has a clear comparative picture of shortlisted programs and knows which they are most ready to apply for.
+
+#### UC-11: View Curriculum Timeline
+
+- **Actor:** Guest / High School Student
+- **Precondition:** Student is on a program detail page
+- **Flow:**
+  1. Student selects the "ชีวิตนักศึกษา" tab on a program detail page.
+  2. System retrieves course structure data extracted from มคอ.2 during ingestion: courses per year, credit hour distribution, teaching method breakdown, assessment method types, and sample learning activity descriptions.
+  3. System displays a year selector (ปี 1–4). Default shows Year 1.
+  4. For the selected year, system displays a Gemini-generated narrative, course composition breakdown, workload indicator, and one concrete example activity description extracted from มคอ.2.
+  5. Student taps different years to compare progression.
+- **Postcondition:** Student has a concrete sense of what studying this program year by year actually involves before applying.
+
+#### UC-12: Portfolio Readiness Check
+
+- **Actor:** Guest / High School Student
+- **Precondition:** Student has a portfolio PDF. Target program has portfolio criteria data ingested (MVP: top 10 programs)
+- **Flow:**
+  1. Student navigates to Portfolio Coach from nav, program detail page, or pin tray.
+  2. Student selects target program(s) and uploads portfolio PDF.
+  3. System uses Gemini to extract a structured portfolio profile: activities by type and level, GPAX, certificates, personal statement presence.
+  4. System retrieves the pre-extracted faculty criteria schema for selected program(s).
+  5. System performs four-part gap analysis: (1) hard threshold eligibility; (2) required item coverage; (3) preferred item strength with level-aware scoring; (4) qualitative criteria assessment using multi-step Gemini reasoning.
+  6. System displays structured report: eligibility status, portfolio strength profile, prioritised gap list, deadline-aware action recommendations.
+  7. If multiple programs selected, system shows which program the student is most ready for right now.
+- **Postcondition:** Student knows exactly what is missing from their portfolio and what to prioritise before the application deadline. System provides preparation guidance, not admission probability prediction.
+
 ### 3.4 User Interface Design
 
 Mobile-first web design using Next.js, Tailwind CSS, and Shadcn/UI. Key screens:
 
 - **Landing page:** Value proposition with two entry paths (interest discovery for undecided students; career search for students with a goal in mind). Bilingual Thai/English.
 - **Interest discovery:** Five-step adaptive elicitation — (1) RIASEC-mapped topic grid (8 topics representing Holland's six interest dimensions) for multi-select; (2) 4–6 adaptive pairwise forced-choice questions targeting ambiguous RIASEC dimensions; (3) one image-based scenario question for non-verbal confirmation; (4) optional dealbreaker filter; (5) confidence check weighting uncertain answers lower. Progress indicator throughout. Results in an animated RIASEC interest profile summary (radar chart) before recommendations are shown.
-- **Program explorer:** Ranked faculty cards with fit score and O\*NET career paths that motivated the recommendation. Tap to expand into PLO spider chart, course overview, and "Why was this recommended?" explanation chain. On first visit, includes a profile correction prompt ("Do these feel right?") that returns the student to targeted re-elicitation of the RIASEC dimensions most influential in the current ranking if they disagree.
-- **Career explorer:** List of O\*NET occupations matched to the student's RIASEC profile. Each card shows Thai-localised title, required skills, and links to KU programs that develop them.
+- **Program explorer:** Ranked program cards with fit score and matched career paths from Pipeline A. On first visit, includes a profile correction prompt ("Do these feel right?") that returns the student to targeted re-elicitation if they disagree with the ranking.
+- **Program detail page:** Full-page view at `/programs/[program-id]` — not a modal — to support URL sharing, extended reading, and mobile scrolling. Contains: hero section, career section (matched O\*NET occupations), curriculum timeline tab (UC-11), PLO radar chart overlaid with student profile, TCAS section with personal eligibility check, and portfolio checker entry point (UC-12).
+- **PLO Explorer:** Browsable program directory with natural language semantic search (UC-09). Persistent pin tray (up to 4 programs) with comparison and batch portfolio check entry points.
+- **Program comparison view:** Side-by-side comparison triggered from the pin tray (UC-10).
+- **Portfolio Coach:** Portfolio readiness checker (UC-12) accessible from nav, program detail page, or pin tray.
+- **Career explorer:** List of O\*NET occupations matched to the student's RIASEC profile from Pipeline A. Each card shows Thai-localised title, required skills, and links to KU programs that develop them.
 - **TCAS guide:** Faculty-specific breakdown of applicable rounds, score requirements, portfolio criteria, and deadlines.
-- **Curriculum chatbot:** Conversational interface supporting Thai and English queries, with source citations from มคอ.2 documents.
-- **Saved profile dashboard:** Bookmarked programs, TCAS deadline tracker, interest profile summary. Requires login.
+- **Curriculum chatbot:** Conversational interface supporting Thai and English queries, with source citations from มคอ.2 documents. When programs are pinned, supports multi-program context queries.
+- **Saved profile dashboard:** Bookmarked programs, TCAS deadline tracker, interest profile summary, before/after comparison of recommendation ranking shift. Requires login.
 
 ---
 
@@ -306,21 +370,29 @@ When a user submits a query to the curriculum chatbot:
 4. Gemini 2.5 Flash generates a grounded response in the requested language.
 5. Source citations are appended to the response.
 
-#### 4.2.2 Recommendation Pipeline Sequence (6 Stages)
+#### 4.2.2 Recommendation Pipeline Sequence (5 Stages — Two Parallel Signals)
 
 When a student completes the interest discovery flow:
 
 1. **RIASEC vector construction.** The five-step adaptive elicitation (UC-01) produces a weighted 6-dimensional RIASEC vector using the predefined topic-to-RIASEC mapping table (Appendix A). Pairwise comparison responses, confidence scalars, and dealbreaker filters are applied before L2-normalisation to a unit vector.
 
-2. **O\*NET career matching.** The normalised RIASEC vector is compared against precomputed O\*NET occupation interest profiles stored in Supabase pgvector using cosine similarity. Top 10–15 occupations form the student's internal career space used for skill aggregation in Stage 3. Of these, the top 7 are surfaced to the student in the Career Explorer (UC-06). O\*NET's interest profiles are empirically derived from surveys of employed workers.
+2. **Parallel signal computation.** Two independent pipelines run concurrently:
 
-3. **Target skill set derivation.** Each occupation in the career shortlist contributes its O\*NET skill requirements, weighted by its similarity score from Stage 2. Skills appearing across many matched occupations receive higher aggregate weight, producing a ranked target skill set in O\*NET's standardised skill taxonomy.
+   **Pipeline A (Career-side):** The student RIASEC vector is compared against precomputed O\*NET occupation RIASEC interest profiles in Supabase pgvector using cosine similarity. O\*NET interest profiles are empirically derived from surveys of employed workers. Top 10–15 occupations form the internal career space; top 7 are surfaced to the student in the Career Explorer (UC-06). An A-score per KU program is computed based on career-program pathway alignment. O\*NET's 35-skill taxonomy is used for Career Explorer display only — it is not used as a bridge to Neo4j in the ranking pipeline.
 
-4. **Skill taxonomy mapping and KU program ranking via Neo4j.** O\*NET skill names in the target skill set are mapped to SkillCluster nodes in Neo4j using a predefined crosswalk table (this mapping is manually maintained and is a source of approximation — see §7.2). Neo4j is then queried for KU programs whose PLOs develop the highest-weighted SkillCluster nodes. A final fit score is computed as cosine similarity between the aggregated SkillCluster weight vector and each program's PLO skill profile.
+   **Pipeline B (Curriculum-side):** Two sub-signals computed independently and combined:
+   - **B1 — Neo4j PLO match:** Student's RIASEC vector converted to a SkillCluster weight vector and matched against KU program PLO SkillCluster profiles via Neo4j graph query. B1-score is the cosine similarity between the student weight vector and each program's PLO skill profile.
+   - **B2 — Semantic course content match:** Student's interest query matched against course description embeddings in Supabase pgvector via semantic search over ingested มคอ.2 course content. B2-score is the weighted mean similarity of the top retrieved course chunks per program.
 
-5. **Explanation generation.** The top-N ranked programs, together with the matched O\*NET occupations and their connecting skill chains, are passed to Gemini 2.5 Flash as structured context. Gemini generates a plain-language explanation for each program structured around: interest → career → skill → PLO → program. Explanations generated in Thai or English depending on the student's language setting.
+   Combined B-score = 0.4 × B1 + 0.6 × B2.
 
-6. **Behavioural re-ranking (registered users only).** For registered users with accumulated interaction data, the RIASEC fit scores from Stage 4 are blended with a behavioural fit score derived from the individual student's own interaction history (not from other users — true collaborative filtering across students is deferred to Phase 2). The blend ratio is controlled by α: new users start at α = 1.0 (pure RIASEC); α decays toward 0.2 as interaction weight accumulates according to the threshold schedule documented in UC-07 (3–5 meaningful signals → α ≈ 0.5; regular user → α ≈ 0.2). Final ranking score = α × RIASEC fit + (1 − α) × behavioural fit. Guest interaction signals are session-scoped and do not update α; guests always begin a new session at α = 1.0. Fallback hierarchy when behavioural data is sparse: (1) sufficient interaction history → normal blended signal; (2) limited interaction history → α held higher; (3) no interaction history → pure RIASEC (α = 1.0). Interaction weights are documented in UC-07.
+   The two pipelines are independent — an error in Pipeline A does not propagate into Pipeline B.
+
+3. **Score synthesis.** Programs ranked by final score = 0.35 × A-score + 0.65 × B-score. Top 10 programs selected for display (MVP scope).
+
+4. **Explanation generation.** Top-N ranked programs, together with their Pipeline A details (matched O\*NET occupations) and Pipeline B details (curriculum themes and matched PLOs), are passed to Gemini 2.5 Flash as structured context. Gemini generates a plain-language explanation for each program referencing both career alignment and curriculum fit. Explanations generated in Thai or English depending on the student's language setting.
+
+5. **Behavioural re-ranking (registered users only).** For registered users with accumulated interaction data, the pipeline scores from Stage 3 are blended with a behavioural fit score derived from the individual student's own interaction history (not from other users — true collaborative filtering across students is deferred to Phase 2). The blend ratio is controlled by α: new users start at α = 1.0 (pure pipeline score); α decays toward 0.2 as interaction weight accumulates according to the threshold schedule documented in UC-07 (3–5 meaningful signals → α ≈ 0.5; regular user → α ≈ 0.2). Final ranking score = α × pipeline score + (1 − α) × behavioural fit. Guest interaction signals are session-scoped and do not update α; guests always begin a new session at α = 1.0. Fallback hierarchy when behavioural data is sparse: (1) sufficient interaction history → normal blended signal; (2) limited interaction history → α held higher; (3) no interaction history → pure pipeline score (α = 1.0). Interaction weights are documented in UC-07.
 
 ### 4.3 AI and Data Design
 
@@ -335,7 +407,11 @@ When a student completes the interest discovery flow:
 
 - **TCAS admission data:** Provided directly by KU faculty advisors. Structured into a per-faculty, per-round schema covering quotas, eligibility criteria, score requirements, and deadlines. Updated manually at the start of each TCAS cycle and version-tagged by year.
 
-- **Interaction log:** Generated by the system as registered users engage with KUru. Stored in Supabase PostgreSQL. Records program saves, card expansions, TCAS guide views, chatbot queries, and card views, each with a timestamp, interaction weight, and associated program identifier. Used to compute the behavioural fit score in Stage 6 of the recommendation pipeline. A background recomputation job updates collaborative scores periodically as new interaction data accumulates.
+- **Interaction log:** Generated by the system as registered users engage with KUru. Stored in Supabase PostgreSQL. Records program saves, card expansions, TCAS guide views, chatbot queries, and card views, each with a timestamp, interaction weight, and associated program identifier. Used to compute the behavioural fit score in Stage 5 of the recommendation pipeline. A background recomputation job updates collaborative scores periodically as new interaction data accumulates.
+
+- **Faculty portfolio criteria documents:** Published by KU faculties for TCAS Round 1 and Round 2 applications. Ingested via the same PDF extraction pipeline as มคอ.2 using Gemini in structured extraction mode to produce a per-faculty, per-round criteria schema. Stored in Supabase PostgreSQL alongside TCAS admission data. Updated at the start of each TCAS cycle. Used by the Portfolio Readiness Checker (Feature 8).
+
+- **Course structure data (extracted layer):** Extracted from มคอ.2 during ingestion as a structured layer stored separately from the embedding chunks. Fields extracted per program per year: course list, credit hour distribution, teaching method breakdown (lecture/lab/project ratios), assessment method types, and sample learning activity descriptions. Stored in Supabase PostgreSQL. Used by the Curriculum Timeline Visualiser (Feature 9).
 
 **Data preprocessing for มคอ.2:**
 1. Text extraction from PDF using PyMuPDF.
@@ -407,7 +483,7 @@ Agile-inspired iterative approach for a two-person team over one semester. Two-w
 | Weeks 1–2 | Data collection | Receive มคอ.2 and TCAS admission data from KU faculty, download O\*NET dataset |
 | Weeks 3–4 | Data pipeline | PDF extraction, chunking, embedding into Supabase pgvector; Neo4j schema + pilot data |
 | Weeks 5–6 | Core AI | RAG pipeline (retrieval + Gemini generation); recommendation engine (graph + interest profile) |
-| Weeks 7–9 | Frontend | Interest discovery UI, PLO spider chart, TCAS guide, chatbot interface, saved profile |
+| Weeks 7–9 | Frontend | Interest discovery UI, PLO Explorer with semantic search and pin tray, program detail full page with curriculum timeline visualiser, PLO spider chart with student overlay, program comparison view, TCAS guide with personal eligibility check, chatbot interface, portfolio readiness checker (top 10 programs), saved profile dashboard |
 | Weeks 10–11 | Evaluation | RAGAS evaluation, MRR/NDCG test set, user testing with 10–15 high school students |
 | Week 12 | Demo & docs | Final demo preparation, documentation, and project report |
 
@@ -422,7 +498,7 @@ The delivered software will include:
 - Data ingestion pipeline for มคอ.2 PDF processing
 - Neo4j knowledge graph populated with all KU programs
 - RAG pipeline and recommendation engine
-- All six core MVP features described in Chapter 1
+- All ten core MVP features described in Chapter 1. Portfolio readiness checker (Feature 8) scoped to top 10 programs. Recommendation engine (Feature 2) initially returns top 10 ranked programs, with architecture designed for full coverage extension.
 
 ### 6.2 Test Report
 
@@ -445,9 +521,9 @@ Three testing levels:
 
 2. **CLO-level mapping:** System uses program-level PLO data (มคอ.2) only. Course-level CLO data (มคอ.3) is not ingested, as features requiring CLO mapping (e.g., skill progress tracking for enrolled students) are out of scope.
 
-3. **O\*NET Thai career mapping:** O\*NET data is in English and uses US career taxonomy. Manual mapping to Thai career titles and KU graduate employment patterns introduces approximation. The O\*NET-to-SkillCluster crosswalk table used in Stage 4 of the recommendation pipeline is manually maintained.
+3. **O\*NET Thai career mapping:** O\*NET data is in English and uses US career taxonomy. Occupation titles are mapped to Thai equivalents for student-facing display in the Career Explorer. O\*NET skill data is used for Career Explorer display only — the recommendation ranking pipeline uses direct curriculum-side matching via Neo4j and pgvector rather than routing through O\*NET skill taxonomy, eliminating the vocabulary mismatch that affected the previous design. Residual approximation exists in the RIASEC-to-SkillCluster weight mapping used in Pipeline B1.
 
-4. **Portfolio scorer:** Designed and documented but not implemented in the MVP due to data dependency on structured per-faculty portfolio rubrics from the admissions office.
+4. **Portfolio checker scope:** The portfolio readiness checker is implemented for the top 10 most popular KU programs in the MVP. Full coverage of all KU programs accepting Round 1 or Round 2 portfolio applications is deferred to Phase 2 pending criteria document availability from all remaining faculties. The checker evaluates structured portfolio content — activity records, certificates, transcripts, and personal statement presence. It does not evaluate creative work quality. It provides preparation guidance, not admission probability prediction.
 
 5. **Evaluation ground truth:** The MRR evaluation test set is manually curated with limited size (30–50 profiles), which constrains the statistical reliability of recommendation quality metrics.
 
@@ -459,7 +535,7 @@ Three testing levels:
 
 1. **KU enrolled student features (Phase 2):** Extend scope to serve currently enrolled KU students. Requires มคอ.3 CLO ingestion, a course enrollment interface, and a skill gap dashboard. The current knowledge graph schema is designed to support this extension without architectural changes.
 
-2. **Portfolio scorer:** Build the AI-assisted portfolio evaluation feature once structured admission rubrics are available from the KU admissions office.
+2. **Portfolio checker full coverage (Phase 2):** The MVP portfolio readiness checker covers the top 10 most popular KU programs. Extension to all KU programs accepting Round 1 or Round 2 portfolio applications requires criteria documents from all remaining faculties and is deferred to Phase 2.
 
 3. **Automated TCAS data refresh:** Monitor mytcas.com for changes each TCAS cycle and automatically notify the data administrator when updates are detected, triggering a review and re-ingestion cycle with KU faculty.
 

@@ -7,7 +7,24 @@
       "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Windows\\\\Fonts'' -Filter ''*sarabun*'' | Select-Object Name\")",
       "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Microsoft\\\\Windows\\\\Fonts'' -Filter ''*Sarabun*'' 2>$null | Select-Object Name; Get-ChildItem ''C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Microsoft\\\\Windows\\\\Fonts'' -Filter ''*TH*'' 2>$null | Select-Object Name\")",
       "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Microsoft\\\\Windows\\\\Fonts'' -Filter ''*Sarabun*'' | Select-Object Name\")",
-      "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Microsoft\\\\Windows\\\\Fonts'' | Where-Object { $_Name -like ''*TH*'' -or $_Name -like ''*sarabun*'' } | Select-Object Name\")"
+      "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Microsoft\\\\Windows\\\\Fonts'' | Where-Object { $_Name -like ''*TH*'' -or $_Name -like ''*sarabun*'' } | Select-Object Name\")",
+      "Skill(update-config)",
+      "Skill(update-config:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "You are a documentation sync agent. You have been triggered because a file was just edited.\n\nHook input: $ARGUMENTS\n\nFirst, check tool_input.file_path. If it does NOT end with .tex, do nothing and stop immediately.\n\nIf it IS a .tex file:\n1. Read the edited .tex file to understand its current content.\n2. Read SRS_CONTEXT.md to locate the section(s) that correspond to that .tex file (e.g. body/abstract.tex → Abstract section, body/requirementanalysis.tex → Chapter 3, body/softwarearchitecture.tex → Chapter 4, body/softwaredevelopment.tex → Chapter 5, body/discussion.tex → Chapter 7, body/introduction.tex → Chapter 1, body/relatedworks.tex → Chapter 2, body/deliverable.tex → Chapter 6).\n3. Update only the affected section(s) in SRS_CONTEXT.md to accurately reflect the current state of the .tex file. Preserve all other sections exactly. Do not rewrite the entire document.",
+            "timeout": 120,
+            "statusMessage": "Syncing SRS_CONTEXT.md..."
+          }
+        ]
+      }
     ]
   }
 }
