@@ -13,6 +13,9 @@
 
 \newappendix{RIASEC-to-Topic Cluster Mapping}
 
+\setcounter{table}{0}
+\renewcommand{\thetable}{A.\arabic{table}}
+
 Table~\ref{tab:riasec-mapping} documents the mapping between Holland's six RIASEC types and the eight topic clusters presented in the interest discovery interface. Each topic tile is assigned a primary RIASEC type and a secondary RIASEC type with associated weights. When a student selects a tile, both weights are added to the corresponding dimensions of the 6-dimensional RIASEC vector. After all five elicitation steps (tile selection, pairwise comparisons, scenario confirmation, dealbreaker filter, and confidence weighting), the vector is L2-normalised before use in retrieval and fit score computation.
 
 \begin{table}[htbp]

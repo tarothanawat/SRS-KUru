@@ -9,7 +9,12 @@
       "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Microsoft\\\\Windows\\\\Fonts'' -Filter ''*Sarabun*'' | Select-Object Name\")",
       "Bash(powershell -Command \"Get-ChildItem ''C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Microsoft\\\\Windows\\\\Fonts'' | Where-Object { $_Name -like ''*TH*'' -or $_Name -like ''*sarabun*'' } | Select-Object Name\")",
       "Skill(update-config)",
-      "Skill(update-config:*)"
+      "Skill(update-config:*)",
+      "WebSearch",
+      "WebFetch(domain:dl.acm.org)",
+      "WebFetch(domain:journals.plos.org)",
+      "WebFetch(domain:research.google)",
+      "WebFetch(domain:www.researchgate.net)"
     ]
   },
   "hooks": {

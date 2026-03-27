@@ -291,6 +291,25 @@
     \label{fig:use-case-diagram}
 \end{figure}
 
+\section{Non-Functional Requirements}
+\label{section:nonfunctional-requirements}
+
+\begin{itemize}[leftmargin=80pt]
+    \item \textbf{Performance:} The RAG chatbot must return a grounded response within 5 seconds for 95\% of queries under normal load. The recommendation pipeline must return ranked results within 8 seconds of interest profile submission. The PLO spider chart must render within 2 seconds of program selection.
+
+    \item \textbf{Availability:} The web application must maintain at least 95\% uptime during the TCAS application period (January--April). Planned maintenance must be performed outside this window.
+
+    \item \textbf{Scalability:} The system must support at least 100 concurrent users during peak TCAS periods without degradation of the above response time targets. Supabase connection pooling and Vercel's serverless deployment model are relied upon to meet this target without custom infrastructure.
+
+    \item \textbf{Security:} All user authentication is delegated to Supabase Auth (OAuth 2.0 / magic link). Portfolio PDFs uploaded for the Portfolio Readiness Checker are processed ephemerally via the Gemini API and are not retained on the server after processing. API keys for Gemini and Neo4j are stored as environment variables and never exposed to the client.
+
+    \item \textbf{Data Privacy (PDPA):} Portfolio PDFs and interest profiles contain personal data. In accordance with Thailand's Personal Data Protection Act B.E. 2562 (PDPA), users are notified of data usage at the point of upload. Guest interaction data is session-scoped and not persisted. Registered users may delete their stored profile and interaction history at any time via the dashboard.
+
+    \item \textbf{Accessibility:} The interface must meet WCAG 2.1 Level AA contrast requirements. All interactive elements must have accessible labels for screen reader compatibility. Thai and English language switching must be available on every screen.
+
+    \item \textbf{Maintainability:} TCAS admission data and มคอ.2 curriculum documents must be re-ingestible independently of the application codebase. The data ingestion pipeline must produce a full re-index without manual code changes when new PDF documents are supplied.
+\end{itemize}
+
 \section{User Interface Design}
 \label{section:user-interface-design}
 
