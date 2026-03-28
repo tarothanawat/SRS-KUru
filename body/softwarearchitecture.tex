@@ -13,6 +13,17 @@ KUru is a three-tier web application with a distinct AI layer. The frontend (Nex
     \label{fig:system-architecture}
 \end{figure}
 
+Figure~\ref{fig:domain-model} shows the domain model: the eleven core entities and their relationships. A \textbf{Student} holds one \textbf{RIASECProfile} (the normalised 6-dimensional interest vector produced by UC-01) and generates \textbf{InteractionLog} entries as they browse. Each \textbf{Program} belongs to a \textbf{Faculty}, which defines its \textbf{PLO}s and publishes \textbf{PortfolioCriteria}. PLOs are linked to \textbf{SkillCluster} nodes in Neo4j (the \textit{develops} relationship), and \textbf{Career} nodes are linked to the same clusters (the \textit{requires} relationship) --- this shared vocabulary enables the multi-hop recommendation path from student interests to program outcomes. \textbf{TCASRecord} and \textbf{Course} are extracted structured layers stored in Supabase alongside the vector embeddings.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\parbox{0.9\textwidth}{\centering\vspace{1em}
+    \textit{[Figure placeholder: KUru Domain Model — 11 entity classes (Student, RIASECProfile, Program, Faculty, PLO, SkillCluster, Career, Course, TCASRecord, InteractionLog, PortfolioCriteria) with typed associations. See DIAGRAMS.md Figure~6 for Mermaid source.]}
+    \vspace{1em}}}
+    \caption{KUru Domain Model}
+    \label{fig:domain-model}
+\end{figure}
+
 \section{Software Design}
 \label{section:software-design}
 
@@ -34,7 +45,7 @@ When a user submits a query to the curriculum chatbot: (1) the query is embedded
 When a student completes the interest discovery flow, the recommendation pipeline proceeds in five stages using two independent parallel signals:
 
 \begin{enumerate}[leftmargin=80pt]
-    \item \textbf{RIASEC vector construction.} The five-step adaptive elicitation (UC-01) produces a weighted 6-dimensional RIASEC vector using the predefined topic-to-RIASEC mapping table in Appendix~\ref{appendix:A}. Pairwise comparison responses, confidence scalars, and dealbreaker filters are applied before L2-normalisation to a unit vector.
+    \item \textbf{RIASEC vector construction.} The twelve-step adaptive elicitation (UC-01) produces a weighted 6-dimensional RIASEC vector. Steps~1--6 (Likert screens) produce raw scores per dimension (max 20 each). Step~7 applies a global confidence scalar (1.0, 0.75, or 0.5). Step~8 (adaptive pairwise) adjusts scores for dimension pairs with delta $< 3$. Steps~9--11 (scenario questions) adjust scores proportionally per response. Step~12 applies the optional dealbreaker filter, zeroing out explicitly rejected dimensions. The resulting vector is L2-normalised to a unit vector before use in Pipeline~A and Pipeline~B.
 
     \item \textbf{Parallel signal computation.} Two independent pipelines run concurrently:
 
@@ -67,6 +78,18 @@ When a student completes the interest discovery flow, the recommendation pipelin
     \label{fig:recommendation-pipeline}
 \end{figure}
 
+\subsection{Interest Elicitation Flow}
+\label{subsection:elicitation-flow}
+
+The interest elicitation flow (UC-01) produces the RIASEC vector that seeds both the recommendation pipeline and the career explorer. The flow is adaptive: the pairwise comparison step (Step~8) is shown only when at least one dimension pair has a score delta below the 3-point ambiguity threshold; students with a clearly differentiated Likert profile skip directly to the scenario questions. Figure~\ref{fig:elicitation-flow} shows the full conditional logic from entry to RIASEC vector output.
+
+\begin{figure}[p]
+    \centering
+    \includegraphics[height=0.9\textheight, keepaspectratio]{diagrams/elicitation-flow.png}
+    \caption{Interest Elicitation Flow (UC-01) — 12-Step Adaptive Process}
+    \label{fig:elicitation-flow}
+\end{figure}
+
 \section{AI and Data Design}
 \label{section:ai-data-design}
 
@@ -78,7 +101,7 @@ When a student completes the interest discovery flow, the recommendation pipelin
 
     \item \textbf{O*NET occupational database \cite{onet2024}:} Publicly available from the US Department of Labor. Contains two data layers used by KUru: (a) \textit{Interests} --- the RIASEC profile for each occupation, derived from surveys of employed workers, used for career matching from the student's RIASEC vector; and (b) \textit{Skills} --- 35 standardized skills per occupation with importance and level scores, displayed in the Career Explorer (UC-06) to show students what skills their matched careers require. Not used as a bridge to Neo4j in the ranking pipeline --- Pipeline~B1 queries Neo4j directly from the RIASEC-derived SkillCluster weight vector. Downloaded as structured data (CSV/JSON). Occupation titles are mapped to Thai equivalents for student-facing display; skill and interest data are used directly as the underlying structure is language-independent.
 
-    \item \textbf{TCAS admission data:} Provided directly by KU faculty advisors. Structured into a per-faculty, per-round schema covering quotas, eligibility criteria, score requirements, and deadlines. Updated manually at the start of each TCAS cycle and version-tagged by year.
+    \item \textbf{TCAS admission data:} Ingested from three sources in priority order. (1)~\textit{KU faculty-provided project PDFs} received via Google Drive --- each PDF (e.g., โครงการช้างเผือก.pdf) may contain admission records for multiple programs across multiple faculties. A batch downloader retrieves all PDFs recursively. Each PDF is classified as tcas / mko2 / portfolio / unknown using rule-based keyword detection on the first page. TCAS PDFs are processed by a structured extraction pipeline using Gemini to parse per-program TCASRecord objects covering project name, round, faculty, program name, quota, GPAX minimum, exam score criteria, portfolio requirements, and application deadlines. (2)~\textit{mytcas.com} --- scraped as a gap-filling layer for programs not covered by faculty PDFs, using the mytcas\_code field in the canonical program registry. (3)~\textit{Faculty portfolio criteria PDFs} --- processed separately using Gemini structured extraction to produce per-faculty, per-round criteria schemas for the Portfolio Readiness Checker. All three sources are resolved against a canonical program registry using fuzzy name matching with PyThaiNLP normalization and sequence similarity scoring (threshold 0.85). Records below this threshold are flagged for manual review. A Supabase materialized view (\texttt{programs\_unified}) joins มคอ.2 structured data, TCAS records, and portfolio criteria into a unified program record keyed on program\_id, refreshed after each ingestion run.
 
     \item \textbf{Interaction log:} Generated by the system as registered users engage with KUru. Stored in Supabase PostgreSQL. Records program saves, card expansions, TCAS guide views, chatbot queries, and card views, each with a timestamp, interaction weight, and associated program identifier. Used to compute the behavioural fit score in Stage~5 of the recommendation pipeline. A background recomputation job updates collaborative scores periodically as new interaction data accumulates.
 
@@ -87,7 +110,21 @@ When a student completes the interest discovery flow, the recommendation pipelin
     \item \textbf{Course structure data (extracted layer):} Extracted from มคอ.2 during ingestion as a structured layer stored separately from the embedding chunks. Fields extracted per program per year: course list, credit hour distribution, teaching method breakdown (lecture/lab/project ratios), assessment method types, and sample learning activity descriptions. Stored in Supabase PostgreSQL. Used by the Curriculum Timeline Visualiser (Feature~9).
 \end{itemize}
 
-Data preprocessing for มคอ.2 documents involves: (1) text extraction from PDF using PyMuPDF; (2) section-aware chunking (PLO sections, course descriptions, and learning outcomes are chunked separately to preserve semantic coherence); (3) embedding generation using Gemini text-embedding-001; (4) storage in Supabase pgvector with metadata tags for faculty, program, document version, and section type.
+มคอ.2 document ingestion uses a six-stage pipeline:
+
+\begin{enumerate}[leftmargin=80pt]
+    \item \textbf{PDF classification.} Pages are classified by text density and Thai character density (minimum 20\% Thai Unicode characters for Thai-language documents, minimum 100 characters per page) into born-digital, scanned, pure-image, or mixed types.
+
+    \item \textbf{Tiered text extraction.} Born-digital pages are processed by PyMuPDF directly. Pages failing Thai character density or length checks are re-processed using Typhoon OCR (opentyphoon.ai), a vision-language model purpose-built for Thai and English document extraction that outperforms general-purpose VLMs on Thai government document formats including complex table layouts and mixed Thai/English content. Gemini Vision serves as a secondary fallback if the Typhoon OCR API is unavailable. Pages where both fallbacks fail are flagged for manual review. Each extracted page is tagged with its extraction method (\texttt{pymupdf} / \texttt{typhoon\_ocr} / \texttt{gemini\_vision} / \texttt{failed}) and confidence level for quality monitoring.
+
+    \item \textbf{Section-aware chunking.} PLO sections, course descriptions, admission requirements, and curriculum structure sections are chunked separately (target 500 tokens, 50-token overlap) to preserve semantic coherence. Each chunk is tagged with section type (\texttt{plo} / \texttt{course} / \texttt{admission} / \texttt{curriculum\_structure} / \texttt{general}).
+
+    \item \textbf{Structured extraction.} PLOs are extracted as typed JSON objects (\texttt{plo\_id}, \texttt{description\_th}, \texttt{description\_en}, \texttt{domain}, \texttt{skill\_keywords}) for Neo4j population. Curriculum structure is extracted as a per-year, per-semester JSON object for the Curriculum Timeline Visualiser.
+
+    \item \textbf{Embedding generation.} Gemini text-embedding-001 generates embeddings in batches with rate limiting. Chunks from failed OCR pages are excluded.
+
+    \item \textbf{Neo4j population and quality reporting.} Program $\rightarrow$ PLO $\rightarrow$ SkillCluster nodes and edges are created from the structured PLO extraction output. An ingestion report is generated per program flagging documents where OCR ratio exceeds 50\% or PLO extraction returns zero results for manual review.
+\end{enumerate}
 
 \subsection{Model Design}
 \label{subsection:model-design}
@@ -98,7 +135,7 @@ Embeddings use Gemini text-embedding-001, a multilingual model that produces con
 
 The Neo4j knowledge graph uses a schema with four node types: Faculty, PLO, SkillCluster, and Career. Edges represent: Faculty -[HAS\_PLO]$\rightarrow$ PLO, PLO -[DEVELOPS]$\rightarrow$ SkillCluster, Career -[REQUIRES]$\rightarrow$ SkillCluster. This schema supports the multi-hop queries required for recommendation: given a student's SkillCluster profile, find Faculties whose PLOs develop those clusters.
 
-The interest discovery interface uses a five-step adaptive elicitation flow grounded in Holland's RIASEC model \cite{holland1997}. Step~1 presents eight RIASEC-mapped topic tiles; each tile is assigned a primary and secondary RIASEC weight (e.g.\ \textit{Computers \& Digital} contributes Investigative (0.8) and Realistic (0.5); \textit{Arts \& Design} contributes Artistic (0.9) and Enterprising (0.4)). Step~2 presents 4--6 adaptive pairwise forced-choice questions targeting only the RIASEC dimensions that remain ambiguous after Step~1 --- adjacent dimensions with similar accumulated weight. Step~3 presents one image-based scenario question for non-verbal confirmation of the dominant signal. Step~4 applies an optional dealbreaker filter: any RIASEC dimensions the student explicitly rejects are zeroed out regardless of their computed weight. Step~5 applies a confidence scalar: answers the student flags as uncertain contribute at reduced weight. The final 6-dimensional RIASEC vector is L2-normalised and used as input to the O*NET career matching pipeline. The full tile-to-RIASEC weight mapping is documented in Appendix~\ref{appendix:A}.
+The interest discovery interface uses an 11-step elicitation flow grounded in Holland's RIASEC model \cite{holland1997}. Steps~1--6 present one RIASEC dimension per screen with 4 Likert statements each (5-point scale, max score 20 per dimension). Step~7 applies a global confidence scalar (1.0 / 0.75 / 0.5) to all dimension scores based on a single self-reported confidence question. Step~8 presents adaptive pairwise forced-choice questions targeting only dimension pairs where the score delta is below a 3-point threshold, with a maximum of 4--6 pairs shown. Steps~9--11 present three scenario questions with A--F role options mapped to RIASEC dimensions, adjusting scores proportionally. Step~11 displays the profile summary with an optional dealbreaker filter that zeros out any explicitly rejected dimensions before L2-normalisation. The full question bank is documented in Appendix~\ref{appendix:A}.
 
 The recommendation ranking blends the RIASEC-derived fit score with a behavioural fit score using a blending weight $\alpha$ that decays automatically as the student accumulates interaction data: new users start at $\alpha = 1.0$ (pure RIASEC); regular users converge toward $\alpha \approx 0.2$ (behaviour-dominated). Interaction signals are weighted by type: program save (1.0), TCAS guide viewed (0.8), chatbot query about a program (0.6), card expanded (0.4), card viewed (0.1).
 

@@ -215,3 +215,156 @@ sequenceDiagram
         FE-->>Student: Fallback message
     end
 ```
+
+---
+
+## Figure 5 — Interest Elicitation Flow (`fig:elicitation-flow`)
+
+> UC-01 adaptive 11-step process. Export as `assets/diagrams/elicitation-flow.png`.
+> Corresponds to §4.2.3.
+
+```mermaid
+flowchart TD
+    START(["Student opens ค้นหาความสนใจ"])
+
+    subgraph LIKERT["Steps 1–6 — Likert Screens"]
+        L["One screen per RIASEC dimension<br/>(R → I → A → S → E → C)<br/>4 statements × 5-point scale<br/>Raw score per dimension: max 20<br/>Progress bar: Step 1–6 of 11"]
+    end
+
+    subgraph CONFIDENCE["Step 7 — Confidence Check"]
+        C["คุณรู้สึกมั่นใจแค่ไหนกับคำตอบที่เพิ่งเลือก?"]
+        C1["มั่นใจมาก → scalar 1.0"]
+        C2["ค่อนข้างมั่นใจ → scalar 0.75"]
+        C3["ไม่แน่ใจเลย → scalar 0.5"]
+        C --> C1 & C2 & C3
+        C1 & C2 & C3 --> SCALED["Apply scalar to all 6 dimension scores"]
+    end
+
+    DELTA["Compute delta for each dimension pair<br/>|score_A − score_B| for all 15 pairs"]
+
+    AMBIG{"Any pair<br/>with delta < 3?"}
+
+    subgraph PAIRWISE["Step 8 — Adaptive Pairwise (conditional)"]
+        P["Show forced-choice questions<br/>for ambiguous pairs only<br/>(max 4–6 pairs)<br/>Each pair offers 'ชอบเท่ากัน' as middle choice<br/>Responses adjust dimension scores"]
+    end
+
+    subgraph SCENARIOS["Steps 9–11 — Scenario Questions"]
+        S["3 scenarios presented sequentially<br/>Each offers A–F role options<br/>mapped to R/I/A/S/E/C<br/>Student selects one preferred role<br/>Responses adjust dimension scores proportionally"]
+    end
+
+    subgraph SUMMARY["Step 11 — Profile Summary + Dealbreaker Filter"]
+        SUM["Display:<br/>• Top 2 dominant dimensions<br/>• Bar chart of all 6 scores (out of 20)<br/>• Holland Code label"]
+        DB["มีสาขาไหนที่คุณไม่อยากเรียนเลย?<br/>6 dimension chips — tap to exclude<br/>'ไม่มี ข้ามได้เลย' prominently shown"]
+        EXCL{"Any dimensions<br/>excluded?"}
+        ZERO["Zero out excluded dimensions"]
+        KEEP["Continue with current scores"]
+        SUM --> DB --> EXCL
+        EXCL -->|"Yes"| ZERO
+        EXCL -->|"No"| KEEP
+    end
+
+    NORM["L2-normalise 6-dimensional vector"]
+    OUTPUT(["RIASEC vector output<br/>→ Feed to Pipeline A + Pipeline B"])
+
+    START --> LIKERT
+    LIKERT --> CONFIDENCE
+    CONFIDENCE --> DELTA
+    DELTA --> AMBIG
+    AMBIG -->|"Yes"| PAIRWISE
+    AMBIG -->|"No"| SCENARIOS
+    PAIRWISE --> SCENARIOS
+    SCENARIOS --> SUMMARY
+    ZERO --> NORM
+    KEEP --> NORM
+    NORM --> OUTPUT
+```
+
+---
+
+## Figure 6 — Domain Model (`fig:domain-model`)
+
+> Core business entities and relationships. Corresponds to §4.1.
+
+```mermaid
+classDiagram
+    class Student {
+        +student_id : uuid
+        +language_pref : th|en
+        +alpha : float
+    }
+    class RIASECProfile {
+        +R I A S E C : float
+        +confidence_scalar : float
+        +created_at : timestamp
+    }
+    class Program {
+        +program_id : uuid
+        +name_th : string
+        +name_en : string
+        +degree_level : string
+        +mytcas_code : string
+    }
+    class Faculty {
+        +faculty_id : uuid
+        +name_th : string
+        +name_en : string
+    }
+    class PLO {
+        +plo_id : string
+        +description_th : string
+        +description_en : string
+        +domain : string
+    }
+    class SkillCluster {
+        +cluster_id : string
+        +name : string
+        +riasec_weights : float[]
+    }
+    class Career {
+        +onet_code : string
+        +title_en : string
+        +title_th : string
+        +riasec_profile : float[]
+    }
+    class Course {
+        +course_code : string
+        +title_th : string
+        +credits : int
+        +year : int
+    }
+    class TCASRecord {
+        +round : int
+        +project_name : string
+        +quota : int
+        +gpax_min : float
+        +deadline : date
+    }
+    class InteractionLog {
+        +interaction_type : string
+        +weight : float
+        +timestamp : timestamp
+    }
+    class PortfolioCriteria {
+        +round : int
+        +required_items : json
+        +preferred_items : json
+    }
+
+    Student "1" --> "1" RIASECProfile : has
+    Student "1" --> "*" InteractionLog : generates
+    Student "*" --> "*" Program : saves
+    InteractionLog "*" --> "1" Program : about
+
+    Program "*" --> "1" Faculty : belongs to
+    Program "1" --> "*" Course : contains
+    Program "1" --> "*" TCASRecord : has admission via
+
+    Faculty "1" --> "*" PLO : defines
+    Faculty "1" --> "*" PortfolioCriteria : publishes
+
+    PLO "*" --> "*" SkillCluster : develops
+    Career "*" --> "*" SkillCluster : requires
+
+    RIASECProfile ..> Career : matched against (Pipeline A)
+    RIASECProfile ..> SkillCluster : converted to weights (Pipeline B1)
+```

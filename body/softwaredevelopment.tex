@@ -22,7 +22,9 @@ Given the data dependency at the start of the project (มคอ.2 documents fro
 
     \item \textbf{AI:} Gemini 2.5 Flash (generation), Gemini text-embedding-001 (embeddings), accessed via Google AI SDK for Python.
 
-    \item \textbf{Data processing:} PyMuPDF (PDF extraction), custom Python chunking pipeline.
+    \item \textbf{Data processing:} PyMuPDF (born-digital PDF extraction), Typhoon OCR v1.5 via opentyphoon.ai API (primary OCR fallback for scanned Thai documents --- purpose-built Thai/English bilingual OCR, outperforms GPT-4o and Gemini on Thai government document formats, free API), Gemini Vision (secondary OCR fallback when Typhoon OCR API is unavailable), custom Python chunking pipeline.
+
+    \item \textbf{Thai NLP:} PyThaiNLP --- Thai text normalization used in TCAS program name entity resolution (fuzzy matching with sequence similarity scoring).
 
     \item \textbf{Deployment:} Vercel (frontend), Railway (FastAPI backend + Neo4j).
 \end{itemize}
@@ -43,31 +45,35 @@ Given the data dependency at the start of the project (มคอ.2 documents fro
 \section{Schedule}
 \label{section:schedule}
 
-Table~\ref{tab:schedule} presents the project schedule organized into phases aligned with the two-week sprint cadence. Data collection gates the start of feature development, and evaluation runs in the final two weeks before the demonstration.
+Table~\ref{tab:schedule} presents the project schedule across four development months: April~2026 (start of co-operative study period) and January--March~2027 (main development semester). The proof of concept --- a working end-to-end interest discovery and recommendation flow --- is targeted for completion by the end of April~2026, establishing that the core AI pipeline is viable before the co-op break.
 
 \begin{table}[htbp]
 \centering
 \small
-\renewcommand{\arraystretch}{1.4}
-\caption{Project Schedule}
+\renewcommand{\arraystretch}{1.5}
+\caption{Project Schedule (4-Month Plan)}
 \label{tab:schedule}
-\begin{tabularx}{\textwidth}{|p{2cm}|p{3cm}|X|}
+\begin{tabularx}{\textwidth}{|X|c|c|c|c|}
 \hline
-\textbf{Period} & \textbf{Phase} & \textbf{Deliverables} \\
+\textbf{Task / Milestone} & \textbf{Apr 2026} & \textbf{Jan 2027} & \textbf{Feb 2027} & \textbf{Mar 2027} \\
 \hline
-Weeks 1--2 & Data collection & Receive มคอ.2 and TCAS admission data from KU faculty, download O*NET dataset \\
+Data collection: มคอ.2 documents (pilot 10 programs), TCAS data from KU faculty, O*NET dataset & \textbullet & & & \\
 \hline
-Weeks 3--4 & Data pipeline & PDF extraction, chunking, embedding into Supabase pgvector; Neo4j schema + pilot data \\
+Data ingestion pipeline: PDF extraction (PyMuPDF + Typhoon OCR), chunking, embedding, Neo4j schema --- pilot scope & \textbullet & & & \\
 \hline
-Weeks 5--6 & Core AI & RAG pipeline (retrieval + Gemini generation); recommendation engine (graph + interest profile) \\
+\textbf{Proof of concept:} Interest discovery UI (UC-01) + hybrid recommendation pipeline (Pipelines A \& B) + program cards (UC-02) --- end-to-end working for pilot programs & \textbullet & & & \\
 \hline
-Weeks 7--8 & Core frontend & Interest discovery UI, program recommendation cards, program detail full page, PLO spider chart with student overlay \\
+Full มคอ.2 ingestion pipeline: all 50 MVP programs across Engineering, Science, and Business faculties & & \textbullet & & \\
 \hline
-Week 9 & Extended frontend & PLO Explorer with semantic search and pin tray, portfolio readiness checker (top 10 programs), curriculum timeline visualiser, program comparison view, TCAS guide with personal eligibility check, saved profile dashboard \\
+RAG pipeline + Curriculum chatbot (UC-04); PLO spider chart (UC-03); TCAS admission guide (UC-05) & & \textbullet & & \\
 \hline
-Weeks 10--11 & Evaluation & RAGAS evaluation, MRR/NDCG test set, user testing with 10--15 high school students \\
+PLO Explorer with semantic search (UC-09); Career explorer (UC-06); Behavioural re-ranking (UC-07); Saved profile dashboard & & & \textbullet & \\
 \hline
-Week 12 & Demo \& docs & Final demo preparation, documentation, and project report \\
+Portfolio readiness checker --- top 10 programs (UC-12); Curriculum timeline visualiser (UC-11); Program comparison (UC-10) & & & \textbullet & \\
+\hline
+Evaluation: RAGAS metrics, MRR/NDCG@5 test set, user testing with 10--15 high school students (SUS) & & & & \textbullet \\
+\hline
+Demo preparation, documentation, and project report & & & & \textbullet \\
 \hline
 \end{tabularx}
 \end{table}

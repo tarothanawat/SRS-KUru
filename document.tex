@@ -18,6 +18,7 @@
 \usepackage{indentfirst}  % Indent first paragraph after headers
 \usepackage{enumitem}  % Better control of itemize, enumerate
 \usepackage{pdflscape}  % Landscape pages for wide figures
+\usepackage{multirow}   % Multi-row cells in tables
 \usepackage{pifont}   % Dingbat symbols for comparison tables
 \newcommand{\cmark}{\ding{51}}  % ✓
 \newcommand{\xmark}{\ding{55}}  % ✗
@@ -84,7 +85,7 @@
     \input{common/onetextpage.tex}
     \onetextpage{Reference}
     \bibliographystyle{IEEEtran}
-    \bibliography{bibliography}  % change the inside to your bibliography file name
+    \bibliography{bibliography}
 
     \include{body/appendices}
 

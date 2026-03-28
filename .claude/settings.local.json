@@ -14,7 +14,8 @@
       "WebFetch(domain:dl.acm.org)",
       "WebFetch(domain:journals.plos.org)",
       "WebFetch(domain:research.google)",
-      "WebFetch(domain:www.researchgate.net)"
+      "WebFetch(domain:www.researchgate.net)",
+      "Bash(\"d:/work/project/srs-kuru/DIAGRAMS.md\")"
     ]
   },
   "hooks": {

@@ -11,43 +11,119 @@
 
 %% Edit past this comment line.
 
-\newappendix{RIASEC-to-Topic Cluster Mapping}
+\newappendix{RIASEC Elicitation Question Bank and Scoring Logic}
 
 \setcounter{table}{0}
 \renewcommand{\thetable}{A.\arabic{table}}
 
-Table~\ref{tab:riasec-mapping} documents the mapping between Holland's six RIASEC types and the eight topic clusters presented in the interest discovery interface. Each topic tile is assigned a primary RIASEC type and a secondary RIASEC type with associated weights. When a student selects a tile, both weights are added to the corresponding dimensions of the 6-dimensional RIASEC vector. After all five elicitation steps (tile selection, pairwise comparisons, scenario confirmation, dealbreaker filter, and confidence weighting), the vector is L2-normalised before use in retrieval and fit score computation.
+This appendix documents the full question bank used by the 11-step interest discovery interface (UC-01) and the scoring rules applied at each stage. After all steps are complete, the 6-dimensional RIASEC vector is L2-normalised before use in the recommendation pipeline.
+
+\noindent\textit{Adaptive threshold note:} Pairwise questions (Table~\ref{tab:pairwise-bank}) are shown only for dimension pairs where $|\text{score}_A - \text{score}_B| < 3$ after confidence scaling. A maximum of 4--6 pairs are presented per session.
 
 \begin{table}[htbp]
 \centering
-\small
-\renewcommand{\arraystretch}{1.4}
-\caption{RIASEC-to-Topic Cluster Weight Mapping}
-\label{tab:riasec-mapping}
-\begin{tabularx}{\textwidth}{|p{3.5cm}|p{2.5cm}|p{1.2cm}|p{3cm}|p{1.2cm}|}
+\footnotesize
+\renewcommand{\arraystretch}{1.3}
+\caption{Likert Question Bank (4 statements per RIASEC dimension, 5-point scale, max score 20)}
+\label{tab:likert-bank}
+\begin{tabularx}{\textwidth}{|p{3cm}|p{0.5cm}|X|}
 \hline
-\textbf{Topic Cluster} & \textbf{Primary RIASEC} & \textbf{Weight} & \textbf{Secondary RIASEC} & \textbf{Weight} \\
+\textbf{Dimension} & \textbf{Q} & \textbf{Statement (Thai)} \\
 \hline
-Computers \& Digital & Investigative (I) & 0.8 & Realistic (R) & 0.5 \\
+\multirow{4}{*}{Realistic (R)} & 1 & ฉันชอบงานที่ได้ใช้มือและร่างกาย เช่น ประกอบ ซ่อม หรือสร้างสิ่งของ \\ \cline{2-3}
+ & 2 & ฉันสนุกกับการทำงานกับเครื่องมือ เครื่องจักร หรืออุปกรณ์ต่าง ๆ \\ \cline{2-3}
+ & 3 & ฉันชอบแก้ปัญหาที่จับต้องได้มากกว่าการคิดเชิงนามธรรม \\ \cline{2-3}
+ & 4 & ฉันรู้สึกสบายใจเมื่อได้ทำงานกลางแจ้งหรือในพื้นที่จริง \\
 \hline
-Science \& Research & Investigative (I) & 0.9 & Realistic (R) & 0.4 \\
+\multirow{4}{*}{Investigative (I)} & 1 & ฉันชอบวิเคราะห์ข้อมูลและหาคำตอบจากหลักฐาน \\ \cline{2-3}
+ & 2 & ฉันสนุกกับการตั้งสมมติฐานและทดสอบแนวคิดใหม่ ๆ \\ \cline{2-3}
+ & 3 & ฉันชอบอ่านหรือค้นคว้าเรื่องที่ฉันสนใจอย่างลึกซึ้ง \\ \cline{2-3}
+ & 4 & ฉันรู้สึกสนุกเมื่อได้แก้ปัญหาที่ซับซ้อนหรือต้องใช้ตรรกะ \\
 \hline
-Engineering \& Building & Realistic (R) & 0.9 & Investigative (I) & 0.5 \\
+\multirow{4}{*}{Artistic (A)} & 1 & ฉันชอบแสดงความคิดสร้างสรรค์ผ่านงานศิลปะ ดนตรี หรือการเขียน \\ \cline{2-3}
+ & 2 & ฉันมักมองเห็นโอกาสในการออกแบบหรือปรับแต่งสิ่งต่าง ๆ ให้สวยงามขึ้น \\ \cline{2-3}
+ & 3 & ฉันรู้สึกสบายใจในสภาพแวดล้อมที่เปิดโอกาสให้แสดงตัวตน \\ \cline{2-3}
+ & 4 & ฉันชอบงานที่ไม่มีกฎตายตัวและมีอิสระในการสร้างสรรค์ \\
 \hline
-Arts \& Design & Artistic (A) & 0.9 & Enterprising (E) & 0.4 \\
+\multirow{4}{*}{Social (S)} & 1 & ฉันรู้สึกมีพลังเมื่อได้ช่วยเหลือหรืออธิบายให้คนอื่นเข้าใจ \\ \cline{2-3}
+ & 2 & ฉันชอบทำงานเป็นทีมและสร้างความสัมพันธ์กับผู้อื่น \\ \cline{2-3}
+ & 3 & ฉันสนใจปัญหาสังคมและอยากมีส่วนร่วมในการแก้ไข \\ \cline{2-3}
+ & 4 & ฉันชอบให้คำปรึกษาหรือสนับสนุนเพื่อน ๆ เมื่อพวกเขาต้องการ \\
 \hline
-Business \& Leadership & Enterprising (E) & 0.9 & Social (S) & 0.4 \\
+\multirow{4}{*}{Enterprising (E)} & 1 & ฉันชอบโน้มน้าวคนอื่นและนำเสนอแนวคิดของตัวเอง \\ \cline{2-3}
+ & 2 & ฉันสนุกกับการวางแผนโครงการและนำทีมให้บรรลุเป้าหมาย \\ \cline{2-3}
+ & 3 & ฉันรู้สึกตื่นเต้นกับความท้าทายและโอกาสทางธุรกิจ \\ \cline{2-3}
+ & 4 & ฉันชอบตัดสินใจและรับผิดชอบผลลัพธ์ที่เกิดขึ้น \\
 \hline
-People \& Society & Social (S) & 0.9 & Enterprising (E) & 0.4 \\
-\hline
-Nature \& Environment & Realistic (R) & 0.8 & Investigative (I) & 0.4 \\
-\hline
-Organization \& Data & Conventional (C) & 0.9 & Investigative (I) & 0.4 \\
+\multirow{4}{*}{Conventional (C)} & 1 & ฉันชอบงานที่มีขั้นตอนชัดเจนและทำตามระบบได้ \\ \cline{2-3}
+ & 2 & ฉันรู้สึกสบายใจเมื่องานมีความแม่นยำและตรวจสอบได้ \\ \cline{2-3}
+ & 3 & ฉันชอบจัดระเบียบข้อมูล แฟ้ม หรือตารางให้เป็นระบบ \\ \cline{2-3}
+ & 4 & ฉันทำงานได้ดีในสภาพแวดล้อมที่มีกฎและความคาดหวังที่ชัดเจน \\
 \hline
 \end{tabularx}
 \end{table}
 
-\noindent\textit{Note: Weights reflect the relative centrality of each RIASEC dimension to the topic cluster as assessed by the development team and reviewed by the faculty advisor. These values are intended as a reasonable initialisation and may be refined through user testing.}
+\begin{table}[htbp]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.3}
+\caption{Pairwise Question Bank (6 adjacent dimension pairs)}
+\label{tab:pairwise-bank}
+\begin{tabularx}{\textwidth}{|p{2cm}|X|X|}
+\hline
+\textbf{Pair} & \textbf{Option A} & \textbf{Option B} \\
+\hline
+R vs.\ I & ออกแบบและสร้างเครื่องมือทางกายภาพ & วิเคราะห์ข้อมูลและพัฒนาทฤษฎีใหม่ \\
+\hline
+I vs.\ A & ค้นคว้าและทดสอบสมมติฐานทางวิทยาศาสตร์ & สร้างสรรค์ผลงานศิลปะหรือสื่อสารสร้างสรรค์ \\
+\hline
+A vs.\ S & ออกแบบประสบการณ์หรือผลงานที่สวยงาม & สอน ให้คำปรึกษา หรือดูแลผู้อื่น \\
+\hline
+S vs.\ E & ทำงานสนับสนุนและช่วยเหลือชุมชน & นำทีมและขับเคลื่อนองค์กรให้เติบโต \\
+\hline
+E vs.\ C & บริหารโครงการและสร้างธุรกิจใหม่ & จัดการระบบและตรวจสอบความถูกต้อง \\
+\hline
+R vs.\ C & งานภาคสนามที่ต้องใช้ทักษะเชิงปฏิบัติ & งานสำนักงานที่เน้นความเป็นระบบและความแม่นยำ \\
+\hline
+\end{tabularx}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.3}
+\caption{Scenario Question Bank (3 scenarios × 6 role options with RIASEC mapping)}
+\label{tab:scenario-bank}
+\begin{tabularx}{\textwidth}{|p{1.5cm}|p{3.5cm}|X|p{1.2cm}|}
+\hline
+\textbf{Scenario} & \textbf{Setting} & \textbf{Role option} & \textbf{RIASEC} \\
+\hline
+\multirow{6}{*}{1} & \multirow{6}{*}{งานแฮกกาธอน 48 ชั่วโมง} &
+A — ออกแบบและสร้าง prototype ที่ใช้งานได้จริง & R \\
+& & B — วิเคราะห์ข้อมูลและหาโซลูชันที่ดีที่สุด & I \\
+& & C — ออกแบบ UI/UX ให้น่าใช้งานและสวยงาม & A \\
+& & D — ประสานงานทีมและดูแลสมาชิกให้ทำงานได้ดี & S \\
+& & E — นำเสนอผลงานต่อกรรมการและโน้มน้าวให้ชนะ & E \\
+& & F — จัดการตารางงาน งบประมาณ และเอกสารทีม & C \\
+\hline
+\multirow{6}{*}{2} & \multirow{6}{*}{โปรเจกต์ชุมชน} &
+A — ก่อสร้างหรือซ่อมแซมโครงสร้างพื้นฐาน & R \\
+& & B — ศึกษาปัญหาและออกแบบแนวทางแก้ไขเชิงระบบ & I \\
+& & C — ผลิตสื่อสร้างสรรค์เพื่อสร้างการรับรู้ & A \\
+& & D — พูดคุยกับชาวบ้านและรวบรวมความต้องการ & S \\
+& & E — ระดมทุนและหาพาร์ทเนอร์สนับสนุนโครงการ & E \\
+& & F — ติดตามความคืบหน้าและรายงานผลให้ถูกต้อง & C \\
+\hline
+\multirow{6}{*}{3} & \multirow{6}{*}{สตาร์ทอัพด้านสุขภาพ} &
+A — พัฒนาอุปกรณ์หรือระบบฮาร์ดแวร์ที่ใช้งานได้ & R \\
+& & B — วิจัยและทดสอบประสิทธิภาพของผลิตภัณฑ์ & I \\
+& & C — สร้างแบรนด์และออกแบบประสบการณ์ผู้ใช้ & A \\
+& & D — ฝึกอบรมและสนับสนุนผู้ใช้งานในชุมชน & S \\
+& & E — วางกลยุทธ์ธุรกิจและขยายตลาด & E \\
+& & F — ดูแลการปฏิบัติตามกฎระเบียบและมาตรฐาน & C \\
+\hline
+\end{tabularx}
+\end{table}
 
 %% Remove the following appendix before publishing your work.
 

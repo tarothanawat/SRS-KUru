@@ -52,19 +52,17 @@
 
 \noindent\textit{Main Flow:}
 \begin{enumerate}[leftmargin=80pt]
-    \item Student opens KUru and selects from 8 RIASEC-mapped topic tiles to establish an initial orientation across Holland's six interest dimensions.
-    \item System identifies which adjacent RIASEC dimensions remain ambiguous from Step~1 and presents 4--6 adaptive pairwise forced-choice questions, each comparing two dimensions the student has not yet clearly distinguished. Students with a clear initial profile receive fewer questions.
-    \item Student views a single image-based scenario question that confirms the dominant RIASEC signal from Steps~1 and~2 using a non-verbal response.
-    \item Student optionally marks topic areas they definitely do not want (dealbreaker filter). Programs dominated by those areas are excluded from recommendations regardless of fit score.
-    \item Student indicates how certain they feel about their answers. Uncertain answers receive proportionally lower weight in the RIASEC vector.
-    \item System constructs a weighted 6-dimensional RIASEC vector from all five inputs using the predefined topic-to-RIASEC mapping table (Appendix~\ref{appendix:A}) and L2-normalises it.
-    \item System identifies the student's two dominant RIASEC types, forming a two-letter Holland Code (e.g., IR for Investigative-Realistic) used as a human-readable label for the student's interest profile.
-    \item System displays an animated RIASEC interest profile summary --- a radar chart showing the student's RIASEC profile --- before proceeding to recommendations.
+    \item Student opens KUru and navigates to ค้นหาความสนใจ. System presents six sequential screens, one per RIASEC dimension (R, I, A, S, E, C), each showing 4 Thai-language statements rated on a 5-point Likert scale (1~=~ไม่เห็นด้วยอย่างมาก, 5~=~เห็นด้วยอย่างมาก). A progress bar shows current step out of 12 total.
+    \item System computes a raw score per dimension (sum of 4 responses, max 20). Before proceeding to the pairwise step, system presents one confidence check screen: ``คุณรู้สึกมั่นใจแค่ไหนกับคำตอบที่เพิ่งเลือก?'' with three options (มั่นใจมาก~=~scalar 1.0, ค่อนข้างมั่นใจ~=~0.75, ไม่แน่ใจเลย~=~0.5). The scalar is applied globally to all six Likert-derived dimension scores.
+    \item System identifies ambiguous dimension pairs --- any two dimensions where $|\text{score}_A - \text{score}_B| < 3$ after confidence scaling. Only pairs meeting this threshold are shown as pairwise forced-choice questions (maximum 4--6 pairs). Students with a clearly differentiated profile receive fewer questions. Each pair presents two options with ``ชอบเท่ากัน'' as a middle choice.
+    \item System presents 3 scenario questions (สถานการณ์ที่ 1--3), each offering A--F role options mapped to RIASEC dimensions. Student selects one preferred role per scenario. Scenario responses adjust dimension scores proportionally.
+    \item System displays the profile summary page showing the top 2 dominant dimensions, a bar chart of all 6 dimension scores (out of 20), and a Holland Code label. Below the summary, system presents an optional dealbreaker filter: ``มีสาขาไหนที่คุณไม่อยากเรียนเลย?'' showing 6 dimension chips. Student may tap any to exclude; tapped dimensions are zeroed in the final vector regardless of score. A ``ไม่มี ข้ามได้เลย'' option is prominently shown.
+    \item System applies L2-normalisation to the final 6-dimensional vector and stores it as the student's RIASEC profile. Student proceeds to recommendations via ``ดูผลลัพธ์''.
 \end{enumerate}
 
-\noindent\textit{Alternative Flow --- Targeted re-elicitation:} If invoked from UC-02 with specific RIASEC dimensions flagged for clarification, the system skips Step~1 and begins directly at Step~2, presenting only pairwise questions targeting the flagged dimensions. Steps~3--5 run normally. This path is triggered when the student selects ``No'' on the profile correction prompt in UC-02.
+\noindent\textit{Alternative Flow --- Targeted re-elicitation:} If invoked from UC-02 with specific RIASEC dimensions flagged for clarification, the system skips Steps~1--2 and begins directly at Step~3, presenting only pairwise questions targeting the flagged dimensions. Steps~4--6 run normally. This path is triggered when the student selects ``No'' on the profile correction prompt in UC-02.
 
-\noindent\textit{Postcondition:} Student has a RIASEC-grounded interest profile used as input to the career matching and program recommendation pipeline. Total elicitation time is 2--4 minutes.
+\noindent\textit{Postcondition:} Student has a RIASEC-grounded interest profile used as input to the career matching and program recommendation pipeline. Total elicitation time is 2--4 minutes across 12 steps.
 
 \vspace{1ex}
 \noindent\textbf{UC-02: View Program Recommendations}
@@ -317,7 +315,7 @@ The interface follows a mobile-first web design using Next.js, Tailwind CSS, and
 \begin{itemize}[leftmargin=80pt]
     \item \textbf{Landing page:} Value proposition with two entry paths (interest discovery for undecided students; career search for students with a goal in mind). Bilingual Thai/English throughout.
 
-    \item \textbf{Interest discovery:} Five-step adaptive elicitation flow --- tile grid, adaptive pairwise comparisons, image-based scenario, dealbreaker filter, confidence check. Progress indicator. Results in an animated RIASEC interest profile radar chart before recommendations are shown.
+    \item \textbf{Interest discovery:} Twelve-step adaptive elicitation --- Steps 1--6: one Likert screen per RIASEC dimension (4 statements, 5-point scale, color-coded per dimension R/I/A/S/E/C); Step 7: global confidence check (single tap, three options); Step 8: adaptive pairwise questions targeting only ambiguous dimension pairs (maximum 4--6, shown only where delta $<$ 3); Steps 9--11: three scenario questions with A--F role options; Step 12: profile summary with inline dealbreaker filter chips and Holland Code display. Progress bar throughout showing step $x$ of 12.
 
     \item \textbf{Program explorer:} Ranked program cards with fit score and matched career paths from Pipeline~A. On first visit, includes a profile correction prompt (``Do these feel right?'') that returns the student to targeted re-elicitation if they disagree with the ranking.
 
