@@ -6,11 +6,9 @@
 
 KUru is a three-tier web application with a distinct AI layer. The frontend (Next.js) communicates with a Python FastAPI backend, which orchestrates two AI subsystems: a RAG pipeline for curriculum Q\&A and a graph-based recommendation engine. Both subsystems read from a shared data layer consisting of Supabase (PostgreSQL + pgvector for embeddings) and Neo4j (knowledge graph on Railway).
 
-\begin{figure}[h]
+\begin{figure}[p]
     \centering
-    \fbox{\parbox{0.9\textwidth}{\centering\vspace{1em}
-    \textit{[Figure placeholder: System architecture diagram showing: Next.js frontend $\rightarrow$ FastAPI backend $\rightarrow$ RAG Engine (Supabase pgvector + Gemini) and Recommendation Engine (Neo4j + interest profile) $\rightarrow$ Data Ingestion Pipeline $\rightarrow$ External sources (มคอ.2 PDFs, O*NET, TCAS data). Also showing: Supabase Auth for user profiles and Gemini API for LLM calls.]}
-    \vspace{1em}}}
+    \includegraphics[width=\textwidth]{diagrams/system-architecture.png}
     \caption{KUru System Architecture}
     \label{fig:system-architecture}
 \end{figure}
@@ -22,6 +20,13 @@ KUru is a three-tier web application with a distinct AI layer. The frontend (Nex
 \label{subsection:rag-pipeline}
 
 When a user submits a query to the curriculum chatbot: (1) the query is embedded using Gemini text-embedding-001; (2) the embedding is used to perform a cosine similarity search against the pgvector store of มคอ.2 document chunks; (3) the top-$k$ retrieved chunks are assembled into a prompt context along with the user query and the conversation history; (4) Gemini 2.5 Flash generates a grounded response in the requested language; (5) source citations are appended to the response.
+
+\begin{figure}[p]
+    \centering
+    \includegraphics[width=\textwidth]{diagrams/rag-pipeline.png}
+    \caption{RAG Pipeline Sequence}
+    \label{fig:rag-pipeline}
+\end{figure}
 
 \subsection{Recommendation Pipeline Sequence}
 \label{subsection:recommendation-pipeline}
@@ -46,7 +51,7 @@ When a student completes the interest discovery flow, the recommendation pipelin
 
     \item \textbf{Score synthesis.} Programs are ranked by a final score combining both pipeline outputs:
     \[\text{score} = 0.35 \times \text{A-score} + 0.65 \times \text{B-score}\]
-    The top-$N$ programs (MVP scope: top 10) are selected for display.
+    The top-$N$ programs are selected for display.
 
     \item \textbf{Explanation generation.} The top-$N$ ranked programs, together with their Pipeline~A details (matched O*NET occupations) and Pipeline~B details (curriculum themes and matched PLOs), are passed to Gemini 2.5 Flash as structured context. Gemini generates a plain-language explanation for each program referencing both career alignment and curriculum fit. Explanations are generated in Thai or English depending on the student's language setting.
 
@@ -54,6 +59,13 @@ When a student completes the interest discovery flow, the recommendation pipelin
     \[\text{final score} = \alpha \times \text{pipeline score} + (1 - \alpha) \times \text{behavioural fit}\]
     Guest interaction signals are session-scoped and do not update $\alpha$; guests always begin a new session at $\alpha = 1.0$. Fallback hierarchy when behavioural data is sparse: (1) sufficient interaction history $\rightarrow$ normal blended signal; (2) limited interaction history $\rightarrow$ $\alpha$ held higher; (3) no interaction history $\rightarrow$ pure pipeline score ($\alpha = 1.0$). Interaction weights are documented in UC-07.
 \end{enumerate}
+
+\begin{figure}[p]
+    \centering
+    \includegraphics[height=0.9\textheight, keepaspectratio]{diagrams/recommendation-pipeline.png}
+    \caption{Recommendation Pipeline — Five Stages with Two Parallel Signals}
+    \label{fig:recommendation-pipeline}
+\end{figure}
 
 \section{AI and Data Design}
 \label{section:ai-data-design}

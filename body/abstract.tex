@@ -6,7 +6,7 @@ KUru is an AI-powered academic pathway navigation system for Kasetsart Universit
 
 The system employs a Retrieval-Augmented Generation (RAG) pipeline grounded in official KU curriculum documents (มคอ.2) to enable semantic question-answering over program content in both Thai and English. A Neo4j knowledge graph maps KU faculties, Program Learning Outcomes (PLOs), skill clusters, and career paths, enabling multi-hop reasoning from a student's interest profile to personalized program recommendations. An interest discovery interface grounded in Holland's RIASEC vocational model, presenting eight topic clusters mapped to RIASEC dimensions, builds an initial student interest profile that is progressively refined through implicit behavioral signals. The system serves prospective students only (pre-admission); features for enrolled KU students are out of scope.
 
-The MVP covers the top 10 KU programs for recommendation and portfolio readiness checking, with architecture designed to extend to all KU programs. The system is evaluated using the RAGAS framework for RAG quality and Mean Reciprocal Rank (MRR) and NDCG@5 for recommendation quality.
+The system covers all KU programs for recommendation, curriculum Q\&A, and career path guidance; the portfolio readiness checker is scoped to the top 10 most popular KU programs in the MVP due to data availability constraints. The system is evaluated using the RAGAS framework for RAG quality and Mean Reciprocal Rank (MRR) and NDCG@5 for recommendation quality.
 
 
 \vspace{.2in}
