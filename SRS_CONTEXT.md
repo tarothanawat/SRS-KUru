@@ -6,7 +6,7 @@
 
 ## Project Identity
 
-- **Title:** KUru: Intelligent PLO-to-Career Navigator
+- **Title:** KUru: An AI-powered academic pathway advisor for students exploring programs at Kasetsart University
 - **Authors:** Thanawat Tantijaroensin (6610545294), Phantawat Luengsiriwattana (6610545871)
 - **Academic Year:** 2568
 - **Advisor:** Jitti Niramitranon
@@ -55,7 +55,7 @@ The core AI architecture combines a RAG pipeline over มคอ.2 curriculum doc
 
 3. **PLO Spider Chart Visualizer:** Interactive radar chart showing the skill profile a student will develop, overlaid with the student's interest profile for visual fit assessment.
 
-4. **Curriculum Chatbot:** RAG-powered Q&A over มคอ.2 documents supporting Thai and English queries.
+4. **KUru Advisor:** RAG-powered Q&A over มคอ.2 documents supporting Thai and English queries.
 
 5. **TCAS Admission Guide:** Structured per-faculty, per-round admission information including GPAX requirements, TGAT/TPAT/A-Level criteria, portfolio requirements, and deadlines.
 
@@ -146,7 +146,7 @@ The interface design is shaped by three evidence-based principles from the prefe
 
 **Third — Cold-start + implicit profiling:** The system addresses the new user cold-start problem through explicit elicitation, then transitions to progressive implicit profiling. Behavioral signals including program page visits, chatbot queries, and saved items continuously refine the user's RIASEC vector without additional questioning. High-guidance elicitation (presenting structured options rather than open-ended prompts) produces significantly higher recommendation match scores than low-guidance alternatives.
 
-**Limitation:** Interest-based elicitation has inherent limitations as a predictor of long-term academic fit. Meta-analytic research on full validated interest inventories reports approximately 50% accuracy in predicting eventual career choice even with substantially longer instruments. KUru's abbreviated elicitation is accordingly framed as a starting point for exploration rather than a definitive match, with recommendation confidence increasing as the implicit profiling layer accumulates behavioral signals. This limitation is discussed further in §7.2.
+**Limitation:** Interest-based elicitation has inherent limitations as a predictor of long-term academic fit. Meta-analytic research on full validated interest inventories reports approximately 50% accuracy in predicting eventual career choice even with substantially longer instruments. KUru's abbreviated elicitation is accordingly framed as a starting point for exploration rather than a definitive match, with recommendation confidence increasing as the implicit profiling layer accumulates behavioral signals.
 
 This work applies established cold-start PE methods and the RIASEC vocational framework to academic pathway advising for Thai university applicants — a novel application context in which the user population (Thai high school students navigating TCAS), the item space (university programs defined by PLOs), and the decision stakes (a multi-year academic commitment) differ substantially from the content recommendation domains in which these methods were originally developed.
 
@@ -215,7 +215,8 @@ KUru's recommendation pipeline is a hybrid system combining two independent sign
   4. Student's interest profile is overlaid on the chart for visual fit comparison.
 - **Postcondition:** Student has a visual understanding of the skills a program builds and how well they match their interests.
 
-#### UC-04: Query Curriculum Chatbot
+#### UC-04: Query KUru Advisor
+
 - **Actor:** Guest / High School Student
 - **Precondition:** มคอ.2 documents have been ingested and indexed in Supabase pgvector
 - **Flow:**
@@ -224,12 +225,13 @@ KUru's recommendation pipeline is a hybrid system combining two independent sign
   3. System retrieves the top semantically relevant มคอ.2 document chunks from pgvector.
   4. System passes chunks and question to Gemini 2.5 Flash with a strict citation instruction.
   5. System displays the generated answer with inline มคอ.2 source citation badges.
+  6. The chatbot also handles TCAS questions for any program where admission data has been ingested — e.g., "Computer Engineering Round 1 ต้องการ GPAX เท่าไหร่?" or "Architecture portfolio ต้องมีอะไรบ้าง?" Answers are grounded in ingested TCAS data with source citations. If TCAS data for a requested program has not been ingested, the system returns the standard fallback message.
 - **Alternative Flow:** If no relevant chunk is found, system responds: "This information was not found in the curriculum document."
 - **Postcondition:** Student has received a cited answer grounded in the official curriculum document.
 
 #### UC-05: View TCAS Admission Guide
 - **Actor:** Guest / Registered User
-- **Precondition:** TCAS admission data collected and structured per faculty and round
+- **Precondition:** TCAS admission data collected and structured per faculty and round. Students may also query TCAS information conversationally via the curriculum chatbot (UC-04), which draws from the same ingested data source.
 - **Flow:**
   1. Student navigates to the TCAS Guide for a faculty.
   2. System displays structured breakdown of applicable rounds, score requirements (GPAX, TGAT/TPAT/A-Level), portfolio criteria, and deadlines.
@@ -357,6 +359,8 @@ Next.js frontend
     → Gemini API (LLM calls)
 ```
 
+**Domain Model (Figure 4.2 — 11 entities):** `Student` holds one `RIASECProfile` (normalised 6D RIASEC vector) and generates `InteractionLog` entries. Each `Program` belongs to a `Faculty`, which defines its `PLO`s and publishes `PortfolioCriteria`. PLOs link to `SkillCluster` nodes (*develops*) and `Career` nodes link to the same clusters (*requires*) — this shared vocabulary enables the multi-hop recommendation path from student interests to program outcomes. `TCASRecord` and `Course` are extracted structured layers stored in Supabase alongside embeddings. The `RIASECProfile` feeds Pipeline A (matched against `Career` RIASEC profiles) and Pipeline B1 (converted to SkillCluster weights for Neo4j query). See DIAGRAMS.md Figure 6 for Mermaid classDiagram source.
+
 ### 4.2 Software Design
 
 #### 4.2.1 RAG Pipeline Sequence
@@ -480,14 +484,27 @@ Agile-inspired iterative approach for a two-person team over one semester. Two-w
 
 ### 5.4 Project Schedule
 
+Four phases across April 2026 – March 2027. P1 Foundation: Apr 1–12; P2 Core AI: Apr 6–30; P3 Features: Jan 2027; P4 Polish & Eval: Feb–Mar 2027. May–Dec 2026 = background development, no milestone tasks.
+
 | Period | Phase | Deliverables |
-|--------|-------|-------------|
-| Weeks 1–2 | Data collection | Receive มคอ.2 and TCAS admission data from KU faculty, download O\*NET dataset |
-| Weeks 3–4 | Data pipeline | PDF extraction, chunking, embedding into Supabase pgvector; Neo4j schema + pilot data |
-| Weeks 5–6 | Core AI | RAG pipeline (retrieval + Gemini generation); recommendation engine (graph + interest profile) |
-| Weeks 7–9 | Frontend | Interest discovery UI, PLO Explorer with semantic search and pin tray, program detail full page with curriculum timeline visualiser, PLO spider chart with student overlay, program comparison view, TCAS guide with personal eligibility check, chatbot interface, portfolio readiness checker (top 10 programs), saved profile dashboard |
-| Weeks 10–11 | Evaluation | RAGAS evaluation, MRR/NDCG test set, user testing with 10–15 high school students |
-| Week 12 | Demo & docs | Final demo preparation, documentation, and project report |
+| ------ | ----- | ------------ |
+| Apr 1–5, 2026 | P1 · Foundation — Set up Repo | Repository setup, project structure, development environment |
+| Apr 1–5, 2026 | P1 · Foundation — Data Collection | Receive มคอ.2 and TCAS data from KU faculty, download O\*NET dataset |
+| Apr 6–12, 2026 | P1 · Foundation — Data Ingestion | PDF extraction, chunking, embedding into Supabase pgvector; Neo4j schema + pilot data |
+| May–Dec 2026 | Background — Development & Refinement | Ongoing development and refinement (no scheduled milestone tasks) |
+| Apr 6–30, 2026 | P2 · Core AI — RAG Chatbot PoC | RAG pipeline (retrieval + Gemini generation), TCAS Q&A support |
+| Apr 6–30, 2026 | P2 · Core AI — RIASEC Recommendation PoC | Recommendation engine (Pipeline A + B, interest elicitation) |
+| Apr 6–30, 2026 | P2 · Core AI — Basic Integration & First Demo | End-to-end integration of RAG + Recommendation, first working demo |
+| Jan 1–31, 2027 | P3 · Features — Program Explorer | PLO Explorer with semantic search and pin tray |
+| Jan 1–31, 2027 | P3 · Features — Program Detail Pages | Full program detail pages, curriculum timeline visualiser, PLO spider chart |
+| Jan 1–31, 2027 | P3 · Features — Portfolio Coach | Portfolio readiness checker (top 10 programs) |
+| Jan 31, 2027 | P3 · Features — Complete Recommendation | Complete recommendation feature integration |
+| Feb 1–28, 2027 | P4 · Polish & Eval — UI/UX Polish | UI/UX polish, Thai/English language switching, mobile-first refinement |
+| Feb 1–28, 2027 | P4 · Polish & Eval — Cross-feature Integration | Chatbot + Explorer + Portfolio connection |
+| Feb 1–28, 2027 | P4 · Polish & Eval — User Testing | RAGAS evaluation, MRR/NDCG test set, SUS user testing with 10–15 students |
+| Mar 1–31, 2027 | P4 · Polish & Eval — Performance Testing | Performance benchmarking against all success metric targets |
+| Mar 1–31, 2027 | P4 · Polish & Eval — Bug Fixing & Optimization | Bug fixes, optimization, stability improvements |
+| Mar 1–31, 2027 | P4 · Polish & Eval — Final Documentation | Final report, demo preparation, project documentation |
 
 ---
 

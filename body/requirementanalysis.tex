@@ -101,7 +101,7 @@
 \noindent\textit{Postcondition:} Student has a visual understanding of the skills a program builds and how well its PLO skill profile aligns with their RIASEC interest vector.
 
 \vspace{1ex}
-\noindent\textbf{UC-04: Query Curriculum Chatbot}
+\noindent\textbf{UC-04: Query KUru Advisor}
 
 \noindent\textit{Actor:} Guest / High School Student
 
@@ -114,6 +114,7 @@
     \item System retrieves the top semantically relevant มคอ.2 document chunks from pgvector.
     \item System passes the chunks and question to Gemini 2.5 Flash with a strict citation instruction.
     \item System displays the generated answer with inline มคอ.2 source citation badges.
+    \item The chatbot also handles TCAS questions for any program where admission data has been ingested --- for example, ``Computer Engineering Round~1 ต้องการ GPAX เท่าไหร่?'' or ``Architecture portfolio ต้องมีอะไรบ้าง?'' Answers are grounded in the ingested TCAS data and include source citations. If TCAS data for a requested program has not been ingested, the system returns the standard fallback message.
 \end{enumerate}
 
 \noindent\textit{Alternative Flow:} If no relevant chunk is found, the system responds: ``This information was not found in the curriculum document.''
@@ -125,7 +126,7 @@
 
 \noindent\textit{Actor:} Guest / Registered User
 
-\noindent\textit{Precondition:} TCAS admission data has been collected and structured per faculty and round.
+\noindent\textit{Precondition:} TCAS admission data has been collected and structured per faculty and round. Students may also query TCAS information conversationally via KUru Advisor (UC-04), which draws from the same ingested data source.
 
 \noindent\textit{Main Flow:}
 \begin{enumerate}[leftmargin=80pt]
@@ -310,28 +311,95 @@
 \section{User Interface Design}
 \label{section:user-interface-design}
 
-The interface follows a mobile-first web design using Next.js, Tailwind CSS, and Shadcn/UI. Key screens include:
+The interface follows a mobile-first web design using Next.js, Tailwind CSS, and Shadcn/UI. The key screens are described below.
 
-\begin{itemize}[leftmargin=80pt]
-    \item \textbf{Landing page:} Value proposition with two entry paths (interest discovery for undecided students; career search for students with a goal in mind). Bilingual Thai/English throughout.
+\paragraph{Landing Page.}
+The entry point presents a bilingual Thai/English value proposition with two primary call-to-action paths: \textit{ค้นหาความสนใจ} (interest discovery) for undecided students, and \textit{ดูโปรแกรม 70+ คณะ มก.} (browse programs) for students who already have a direction. Supporting copy highlights the three-minute completion time, มคอ.2 data coverage, and free access.
 
-    \item \textbf{Interest discovery:} Twelve-step adaptive elicitation --- Steps 1--6: one Likert screen per RIASEC dimension (4 statements, 5-point scale, color-coded per dimension R/I/A/S/E/C); Step 7: global confidence check (single tap, three options); Step 8: adaptive pairwise questions targeting only ambiguous dimension pairs (maximum 4--6, shown only where delta $<$ 3); Steps 9--11: three scenario questions with A--F role options; Step 12: profile summary with inline dealbreaker filter chips and Holland Code display. Progress bar throughout showing step $x$ of 12.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{mock-ui/landing-page.png}
+    \caption{KUru landing page --- bilingual entry point with interest-discovery and program-browse paths.}
+    \label{fig:ui-landing}
+\end{figure}
 
-    \item \textbf{Program explorer:} Ranked program cards with fit score and matched career paths from Pipeline~A. On first visit, includes a profile correction prompt (``Do these feel right?'') that returns the student to targeted re-elicitation if they disagree with the ranking.
+\paragraph{Interest Discovery.}
+The twelve-step adaptive elicitation flow collects the student's RIASEC profile. Steps~1--6 present one Likert screen per RIASEC dimension (4 Thai-language statements, 5-point scale, colour-coded per dimension); Step~7 applies a global confidence scalar; Step~8 shows adaptive pairwise forced-choice questions for ambiguous dimension pairs (maximum 4--6, threshold delta~$<$~3); Steps~9--11 present three scenario questions with A--F role options; Step~12 displays the profile summary with Holland Code, per-dimension score bars, and optional dealbreaker filter chips. A progress bar is shown throughout.
 
-    \item \textbf{Program detail page:} Full-page view at \texttt{/programs/[program-id]} --- not a modal --- to support URL sharing, extended reading, and mobile scrolling. Contains: hero section with program identity, career section (matched occupations from Pipeline~A), curriculum timeline tab (year-by-year visualiser via UC-11), PLO radar chart overlaid with student interest profile, TCAS section with personal eligibility check, and portfolio checker entry point (UC-12).
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{mock-ui/interest-discovery-start.png}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{mock-ui/interest-discovery-results.png}
+    \end{minipage}
+    \caption{Interest discovery flow: (left) opening screen prompting the student to begin the 24-statement RIASEC assessment; (right) Step~12 profile summary showing the Holland Code, dominant dimensions (Social, Realistic), and per-dimension score bars before proceeding to recommendations.}
+    \label{fig:ui-interest-discovery}
+\end{figure}
 
-    \item \textbf{PLO Explorer:} Browsable program directory with natural language semantic search (UC-09). Persistent pin tray (up to 4 programs) with comparison and batch portfolio check entry points.
+\paragraph{Recommendation Results (ผลพัจน์).}
+After elicitation, the system presents a personalised results page structured in three sections: (1) the student's RIASEC profile card displaying their Holland Code and top dimensions; (2) matched O*NET occupations via Pipeline~A, each showing a fit percentage, required skills, and linked KU programs; (3) ranked KU program cards with fit scores derived from Pipeline~B. On first visit, a profile correction prompt allows the student to trigger targeted re-elicitation if the ranking does not feel right.
 
-    \item \textbf{Program comparison view:} Side-by-side comparison triggered from the pin tray (UC-10). Shows overlaid radar charts, career overlap, curriculum character profile, TCAS accessibility, and RIASEC fit scores.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{mock-ui/riasec-to-career-recommendation.png}
+    \caption{Recommendation results page --- RIASEC profile summary (top), matched O*NET careers with fit scores (middle), and ranked KU program cards (bottom).}
+    \label{fig:ui-recommendation}
+\end{figure}
 
-    \item \textbf{Portfolio Coach:} Portfolio readiness checker (UC-12) accessible from nav, program detail page, or pin tray. Supports single and multi-program gap analysis.
+\paragraph{Program Explorer (สำรวจหลักสูตร).}
+A browsable and semantically searchable directory of KU programs. Each program card displays the PLO fit score, faculty tag, estimated TCAS score range, and entry-round badges. Students can filter by faculty or keyword and pin up to four programs to a persistent comparison tray at the top of the page.
 
-    \item \textbf{Career explorer:} List of O*NET occupations matched to the student's RIASEC profile from Pipeline~A. Each card shows Thai-localised title, required skills, and links to the KU programs that develop them.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.95\textwidth]{mock-ui/program-explorer.png}
+    \caption{Program explorer --- grid of ranked program cards with PLO fit scores, faculty tags, and TCAS score ranges. The search bar supports natural language queries in Thai and English.}
+    \label{fig:ui-explorer}
+\end{figure}
 
-    \item \textbf{TCAS guide:} Faculty-specific breakdown of applicable rounds, score requirements, portfolio criteria, and deadlines.
+\paragraph{KUru Advisor (แชทกับ KUru).}
+A RAG-powered conversational interface for querying curriculum and TCAS information. The chatbot answers natural language questions in Thai and English, grounding responses in ingested มคอ.2 documents and TCAS admission data. Each response includes source citations (document name and page). When programs are pinned, the chatbot supports multi-program context queries.
 
-    \item \textbf{Curriculum chatbot:} Conversational interface supporting Thai and English queries, with source citations from มคอ.2 documents. When programs are pinned, supports multi-program context queries.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.85\textwidth]{mock-ui/Kuru-chatbot.png}
+    \caption{KUru Advisor chat interface --- the student asks ``What is CPE?'' and receives a grounded answer about Computer Engineering TCAS Round~3 requirements with source citations.}
+    \label{fig:ui-chatbot}
+\end{figure}
 
-    \item \textbf{Saved profile dashboard:} Bookmarked programs, TCAS deadline tracker, interest profile summary, before/after comparison of recommendation ranking shift. Requires login.
-\end{itemize}
+\paragraph{Portfolio Coach.}
+A two-step portfolio readiness checker accessible from the navigation bar, program detail page, or pin tray. In the first step the student uploads portfolio documents (PDF or image). In the second step the system displays a readiness score, a gap analysis comparing the student's credentials against the target program's admission criteria, and a checklist of fulfilled and missing items.
+
+\begin{figure}[htbp]
+    \centering
+    \begin{minipage}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{mock-ui/portfolio-coach-upload-files.png}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[t]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{mock-ui/portfolio-coach-analysis.png}
+    \end{minipage}
+    \caption{Portfolio Coach: (left) document upload screen accepting portfolio PDFs and transcript images; (right) analysis results showing a 75\% readiness score for Computer Engineering, with GPAX and competition award criteria marked as fulfilled.}
+    \label{fig:ui-portfolio}
+\end{figure}
+
+\paragraph{Program Detail Page.}
+Full-page view at \texttt{/programs/[program-id]} --- not a modal --- to support URL sharing, extended reading, and mobile scrolling. Contains: hero section with program identity, career section (matched occupations from Pipeline~A), curriculum timeline tab (year-by-year visualiser via UC-11), PLO radar chart overlaid with the student's interest profile, TCAS section with personal eligibility check, and portfolio checker entry point (UC-12).
+
+\paragraph{Program Comparison View.}
+Side-by-side comparison triggered from the pin tray (UC-10). Shows overlaid PLO radar charts, career path overlap, curriculum character profile across five dimensions, TCAS accessibility per round, and RIASEC fit scores for up to four pinned programs simultaneously.
+
+\paragraph{Career Explorer.}
+List of O*NET occupations matched to the student's RIASEC profile via Pipeline~A. Each card shows the Thai-localised occupation title, required skill clusters, and the KU programs that develop those skills.
+
+\paragraph{TCAS Guide.}
+Faculty-specific breakdown of applicable admission rounds, score requirements (GPAX, TGAT, TPAT, A-Level), portfolio criteria, and application deadlines, drawn from the ingested TCAS dataset.
+
+\paragraph{Saved Profile Dashboard.}
+Bookmarked programs, TCAS deadline tracker, interest profile summary, and a before/after comparison of recommendation ranking shifts over time. Requires student login.

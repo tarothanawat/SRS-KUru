@@ -45,35 +45,51 @@ Given the data dependency at the start of the project (มคอ.2 documents fro
 \section{Schedule}
 \label{section:schedule}
 
-Table~\ref{tab:schedule} presents the project schedule across four development months: April~2026 (start of co-operative study period) and January--March~2027 (main development semester). The proof of concept --- a working end-to-end interest discovery and recommendation flow --- is targeted for completion by the end of April~2026, establishing that the core AI pipeline is viable before the co-op break.
+Development is organized into four phases across April~2026 -- March~2027. P1~Foundation runs April~1--12, P2~Core~AI runs April~6--30, P3~Features runs January~2027, and P4~Polish \& Evaluation runs February--March~2027. The May--December~2026 period covers background development and refinement with no scheduled milestone tasks.
 
 \begin{table}[htbp]
 \centering
-\small
-\renewcommand{\arraystretch}{1.5}
-\caption{Project Schedule (4-Month Plan)}
+\footnotesize
+\renewcommand{\arraystretch}{1.4}
+\caption{Project Schedule}
 \label{tab:schedule}
-\begin{tabularx}{\textwidth}{|X|c|c|c|c|}
+\begin{tabularx}{\textwidth}{|p{3.2cm}|p{2.8cm}|X|}
 \hline
-\textbf{Task / Milestone} & \textbf{Apr 2026} & \textbf{Jan 2027} & \textbf{Feb 2027} & \textbf{Mar 2027} \\
+\textbf{Period} & \textbf{Phase} & \textbf{Deliverables} \\
 \hline
-Data collection: มคอ.2 documents (pilot 10 programs), TCAS data from KU faculty, O*NET dataset & \textbullet & & & \\
+Apr 1--5, 2026 & P1 · Foundation — Set up Repo & Repository setup, project structure, development environment \\
 \hline
-Data ingestion pipeline: PDF extraction (PyMuPDF + Typhoon OCR), chunking, embedding, Neo4j schema --- pilot scope & \textbullet & & & \\
+Apr 1--5, 2026 & P1 · Foundation — Data Collection & Receive มคอ.2 and TCAS admission data from KU faculty, download O*NET dataset \\
 \hline
-\textbf{Proof of concept:} Interest discovery UI (UC-01) + hybrid recommendation pipeline (Pipelines A \& B) + program cards (UC-02) --- end-to-end working for pilot programs & \textbullet & & & \\
+Apr 6--12, 2026 & P1 · Foundation — Data Ingestion & PDF extraction, chunking, embedding into Supabase pgvector; Neo4j schema + pilot data \\
 \hline
-Full มคอ.2 ingestion pipeline: all 50 MVP programs across Engineering, Science, and Business faculties & & \textbullet & & \\
+May--Dec 2026 & Background — Development \& Refinement & Ongoing development and refinement (no scheduled milestone tasks) \\
 \hline
-RAG pipeline + Curriculum chatbot (UC-04); PLO spider chart (UC-03); TCAS admission guide (UC-05) & & \textbullet & & \\
+Apr 6--30, 2026 & P2 · Core AI — RAG Chatbot PoC & RAG pipeline (retrieval + Gemini generation), TCAS Q\&A support \\
 \hline
-PLO Explorer with semantic search (UC-09); Career explorer (UC-06); Behavioural re-ranking (UC-07); Saved profile dashboard & & & \textbullet & \\
+Apr 6--30, 2026 & P2 · Core AI — RIASEC Recommendation PoC & Recommendation engine (Pipeline A + B, interest elicitation) \\
 \hline
-Portfolio readiness checker --- top 10 programs (UC-12); Curriculum timeline visualiser (UC-11); Program comparison (UC-10) & & & \textbullet & \\
+Apr 6--30, 2026 & P2 · Core AI — Basic Integration \& First Demo & End-to-end integration of RAG + Recommendation, first working demo \\
 \hline
-Evaluation: RAGAS metrics, MRR/NDCG@5 test set, user testing with 10--15 high school students (SUS) & & & & \textbullet \\
+Jan 1--31, 2027 & P3 · Features — Program Explorer & PLO Explorer with semantic search and pin tray \\
 \hline
-Demo preparation, documentation, and project report & & & & \textbullet \\
+Jan 1--31, 2027 & P3 · Features — Program Detail Pages & Full program detail pages, curriculum timeline visualiser, PLO spider chart \\
+\hline
+Jan 1--31, 2027 & P3 · Features — Portfolio Coach & Portfolio readiness checker (top 10 programs) \\
+\hline
+Jan 31, 2027 & P3 · Features — Complete Recommendation & Complete recommendation feature integration \\
+\hline
+Feb 1--28, 2027 & P4 · Polish \& Eval — UI/UX Polish & UI/UX polish, Thai/English language switching, mobile-first refinement \\
+\hline
+Feb 1--28, 2027 & P4 · Polish \& Eval — Cross-feature Integration & Chatbot + Explorer + Portfolio connection \\
+\hline
+Feb 1--28, 2027 & P4 · Polish \& Eval — User Testing & RAGAS evaluation, MRR/NDCG test set, SUS user testing with 10--15 students \\
+\hline
+Mar 1--31, 2027 & P4 · Polish \& Eval — Performance Testing & Performance benchmarking against all success metric targets \\
+\hline
+Mar 1--31, 2027 & P4 · Polish \& Eval — Bug Fixing \& Optimization & Bug fixes, optimization, stability improvements \\
+\hline
+Mar 1--31, 2027 & P4 · Polish \& Eval — Final Documentation & Final report, demo preparation, project documentation \\
 \hline
 \end{tabularx}
 \end{table}
