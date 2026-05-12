@@ -1,0 +1,13 @@
+~\hfill \textbf {Page}\par \addvspace {.2in} \relax \fontsize {14.4}{17}\selectfont \abovedisplayskip 14\p@ plus3\p@ minus7\p@ \abovedisplayshortskip \z@ plus4\p@ \belowdisplayshortskip 7\p@ plus4\p@ minus3\p@ \belowdisplayskip \abovedisplayskip \let \leftmargin \leftmargini \parsep 4\p@ plus2\p@ minus\p@ \topsep 8\p@ plus2\p@ minus4\p@ \itemsep 4\p@ plus2\p@ minus\p@ \leftmargin \leftmargini \parsep 4\p@ plus2\p@ minus\p@ \topsep 8\p@ plus2\p@ minus4\p@ \itemsep 4\p@ plus2\p@ minus\p@ 
+\contentsline {figure}{\numberline {3.1}{\ignorespaces KUru Use Case Diagram}}{27}{figure.3.1}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces KUru landing page --- bilingual entry point with interest-discovery and program-browse paths.}}{30}{figure.3.2}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Interest discovery flow: (left) opening screen prompting the student to begin the 24-statement RIASEC assessment; (right) Step~12 profile summary showing the Holland Code, dominant dimensions (Social, Realistic), and per-dimension score bars before proceeding to recommendations.}}{30}{figure.3.3}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Recommendation results page --- RIASEC profile summary (top), matched O*NET careers with fit scores (middle), and ranked KU program cards (bottom).}}{31}{figure.3.4}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Program explorer --- grid of ranked program cards with PLO fit scores, faculty tags, and TCAS score ranges. The search bar supports natural language queries in Thai and English.}}{32}{figure.3.5}%
+\contentsline {figure}{\numberline {3.6}{\ignorespaces KUru Advisor chat interface --- the student asks ``What is CPE?'' and receives a grounded answer about Computer Engineering TCAS Round~3 requirements with source citations.}}{33}{figure.3.6}%
+\contentsline {figure}{\numberline {3.7}{\ignorespaces Portfolio Coach: (left) document upload screen accepting portfolio PDFs and transcript images; (right) analysis results showing a 75\% readiness score for Computer Engineering, with GPAX and competition award criteria marked as fulfilled.}}{34}{figure.3.7}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces KUru System Architecture}}{37}{figure.4.1}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces KUru Domain Model}}{38}{figure.4.2}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces RAG Pipeline Sequence}}{48}{figure.4.3}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Recommendation Pipeline — Five Stages with Two Parallel Signals}}{49}{figure.4.4}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Interest Elicitation Flow (UC-01) — 12-Step Adaptive Process}}{50}{figure.4.5}%

@@ -23,7 +23,7 @@
 \newcommand{\cmark}{\ding{51}}  % ✓
 \newcommand{\xmark}{\ding{55}}  % ✗
 
-\graphicspath{{./assets}}
+\graphicspath{{./assets/}}
 
 % add macro to substitute for empty vars
 \def \usevar#1{\ifx\empty#1 \empty\else #1\fi}
@@ -55,8 +55,9 @@
     \pagenumbering{roman}
     \setlength{\parindent}{40pt}
 
-    \include{body/abstract}
-    \include{body/acknowledgement}
+    %% PROPOSAL: Abstract and Acknowledgement hidden
+    %% \include{body/abstract}
+    %% \include{body/acknowledgement}
 
     \tableofcontents
 
@@ -73,14 +74,15 @@
     \clearpage
     \pagenumbering{arabic}
     %% Chapters section
-    %% You may use percent-sign (%) to comment parts you don't want included
+    %% PROPOSAL: Include Chapters 1-4 and 5.4 (Schedule) only
     \include{body/introduction}
     \include{body/relatedworks}
     \include{body/requirementanalysis}
     \include{body/softwarearchitecture}
     \include{body/softwaredevelopment}
-    \include{body/deliverable}
-    \include{body/discussion}
+    %% PROPOSAL: Deliverables, Discussion hidden
+    %% \include{body/deliverable}
+    %% \include{body/discussion}
     %% Chapters section
 
     \input{common/onetextpage.tex}

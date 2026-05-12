@@ -1,6 +1,8 @@
-# KUru SRS — Full Context Reference
+# KUru SRS — Full Context Reference (PROPOSAL VERSION)
 
-> **Purpose:** This document is a complete, readable summary of the KUru Software Requirements Specification for use by AI agents reviewing or extending the proposal. All content reflects the current state of the LaTeX source files.
+> **Purpose:** This document is a complete, readable summary of the KUru Software Requirements Specification for use by AI agents reviewing or extending the proposal.
+>
+> ⚠️ **PROPOSAL STATE:** This document reflects the **condensed proposal version** (Chapters 1–4 and Schedule). Sections not included in the proposal (Abstract, Acknowledgement, Chapters 6–7, Sections 5.1–5.3) are noted as hidden. For the full technical specification, refer to the full SRS document.
 
 ---
 
@@ -13,7 +15,27 @@
 
 ---
 
-## Abstract
+## Preamble — PROPOSAL VERSION
+
+**This context document reflects the condensed PROPOSAL version of the KUru SRS.**
+
+**Included in Proposal:**
+- Cover pages with "(Proposal)" designation
+- Chapters 1–4 (Introduction, Literature Review, Requirement Analysis, Software Architecture)
+- Section 5.4 (Schedule only)
+
+**Hidden in Proposal:**
+- Abstract and Acknowledgement sections
+- Chapter 5 Sections 5.1–5.3 (Development Methodology, Technology Stack, Coding Standards)
+- Chapter 6 (Deliverables)
+- Chapter 7 (Conclusion and Discussion)
+- Appendices
+
+**Schedule Focus:** April 2026 (P1 Foundation + P2 Core AI) and January–March 2027 (P3 Features + P4 Polish & Evaluation). **Proof of Concept:** By end of April 2026, core AI features (RAG chatbot + recommendation engine with RIASEC elicitation) will be delivered as a working demonstration. May–December 2026 background development period is not detailed in the proposal.
+
+---
+
+## Abstract (Hidden in Proposal)
 
 KUru is an AI-powered academic pathway navigation system for Kasetsart University (KU). The system addresses a clearly defined problem: students who are interested in exploring career paths or programs at KU lack personalized, structured guidance when selecting programs for TCAS applications.
 
@@ -417,8 +439,8 @@ When a student completes the interest discovery flow:
 
 **มคอ.2 ingestion pipeline (6 stages):**
 
-1. **PDF classification** — pages classified by text density and Thai character density into born-digital, scanned, pure-image, or mixed types.
-2. **Tiered text extraction** — born-digital pages via PyMuPDF; scanned pages via Typhoon OCR (opentyphoon.ai, primary fallback, purpose-built Thai/English OCR); Gemini Vision as secondary fallback. Failed pages flagged for manual review. Each page tagged with extraction method and confidence level.
+1. **PDF classification** — pages classified by text density and Thai character density (minimum 20% Thai Unicode characters for Thai-language documents, minimum 100 characters per page) into born-digital, scanned, pure-image, or mixed types.
+2. **Tiered text extraction** — born-digital pages processed by PyMuPDF directly. Pages failing Thai character density or length checks are re-processed using Typhoon OCR (opentyphoon.ai), a vision-language model purpose-built for Thai and English document extraction that outperforms general-purpose VLMs on Thai government document formats including complex table layouts and mixed Thai/English content. Gemini Vision serves as secondary fallback if the Typhoon OCR API is unavailable. Pages where both fallbacks fail are flagged for manual review. Each extracted page tagged with extraction method (pymupdf / typhoon_ocr / gemini_vision / failed) and confidence level for quality monitoring.
 3. **Section-aware chunking** — PLO, course, admission, and curriculum structure sections chunked separately (target 500 tokens, 50-token overlap), tagged by section type.
 4. **Structured extraction** — PLOs extracted as typed JSON objects for Neo4j; curriculum structure extracted as per-year JSON for the Timeline Visualiser.
 5. **Embedding generation** — Gemini text-embedding-001 in batches; chunks from failed OCR pages excluded.
@@ -467,11 +489,11 @@ Agile-inspired iterative approach for a two-person team over one semester. Two-w
 | Component | Technology | Notes |
 |-----------|-----------|-------|
 | Frontend | Next.js 14 (App Router), Tailwind CSS, Shadcn/UI | TypeScript, built-in i18n routing for Thai/English |
-| Backend | Python FastAPI | Python ecosystem access (PyMuPDF, neo4j driver), async performance |
+| Backend | Python FastAPI | Python ecosystem access (PyMuPDF for PDF processing, sentence-transformers, neo4j driver) and async performance |
 | Vector database | Supabase (PostgreSQL + pgvector) | Stores มคอ.2 document embeddings, precomputed O\*NET occupation interest profiles, user profiles, TCAS structured data, and the interaction log (program saves, card views, TCAS guide views, chatbot queries with weights and timestamps). A background job periodically recomputes collaborative scores from the interaction log. Supabase Auth handles authentication |
 | Graph database | Neo4j on Railway | PLO–Skill–Career knowledge graph; queried via Cypher from FastAPI backend |
 | AI | Gemini 2.5 Flash (generation), Gemini text-embedding-001 (embeddings) | Google AI SDK for Python |
-| Data processing | PyMuPDF, Typhoon OCR v1.5 (primary OCR fallback), Gemini Vision (secondary OCR fallback), custom Python chunking pipeline | PyMuPDF for born-digital PDFs; Typhoon OCR purpose-built Thai/English bilingual OCR outperforms GPT-4o on Thai government documents; Gemini Vision fallback when Typhoon API unavailable |
+| Data processing | PyMuPDF, Typhoon OCR v1.5 (primary OCR fallback), Gemini Vision (secondary OCR fallback), custom Python chunking pipeline | PyMuPDF for born-digital PDFs; Typhoon OCR v1.5 purpose-built Thai/English bilingual OCR outperforms GPT-4o and Gemini on Thai government document formats, free API; Gemini Vision fallback when Typhoon API unavailable |
 | Thai NLP | PyThaiNLP | Thai text normalization for TCAS program name entity resolution (fuzzy matching, threshold 0.85) |
 | Deployment | Vercel (frontend), Railway (FastAPI backend + Neo4j) | |
 
@@ -482,19 +504,18 @@ Agile-inspired iterative approach for a two-person team over one semester. Two-w
 - **Git:** Conventional commits (feat/fix/chore/docs), feature branches merged via PR with at least one review.
 - **Secrets:** All secrets in .env files, never committed.
 
-### 5.4 Project Schedule
+### 5.4 Project Schedule (Proposal Version)
 
-Four phases across April 2026 – March 2027. P1 Foundation: Apr 1–12; P2 Core AI: Apr 6–30; P3 Features: Jan 2027; P4 Polish & Eval: Feb–Mar 2027. May–Dec 2026 = background development, no milestone tasks.
+**PROPOSAL TIMELINE:** The proposal focuses on April 2026 (P1 Foundation + P2 Core AI) and January–March 2027 (P3 Features + P4 Polish & Evaluation). The April 2026 period delivers proof-of-concept implementations of the core AI features (RAG chatbot for curriculum Q&A and hybrid recommendation engine with RIASEC-based interest discovery). **By end of April 2026, the first working demo integrating both core AI systems will be complete.**
 
 | Period | Phase | Deliverables |
 | ------ | ----- | ------------ |
 | Apr 1–5, 2026 | P1 · Foundation — Set up Repo | Repository setup, project structure, development environment |
 | Apr 1–5, 2026 | P1 · Foundation — Data Collection | Receive มคอ.2 and TCAS data from KU faculty, download O\*NET dataset |
 | Apr 6–12, 2026 | P1 · Foundation — Data Ingestion | PDF extraction, chunking, embedding into Supabase pgvector; Neo4j schema + pilot data |
-| May–Dec 2026 | Background — Development & Refinement | Ongoing development and refinement (no scheduled milestone tasks) |
 | Apr 6–30, 2026 | P2 · Core AI — RAG Chatbot PoC | RAG pipeline (retrieval + Gemini generation), TCAS Q&A support |
 | Apr 6–30, 2026 | P2 · Core AI — RIASEC Recommendation PoC | Recommendation engine (Pipeline A + B, interest elicitation) |
-| Apr 6–30, 2026 | P2 · Core AI — Basic Integration & First Demo | End-to-end integration of RAG + Recommendation, first working demo |
+| Apr 6–30, 2026 | P2 · Core AI — Basic Integration & First Demo | **End-to-end integration of RAG + Recommendation, first working demo (PROOF OF CONCEPT)** |
 | Jan 1–31, 2027 | P3 · Features — Program Explorer | PLO Explorer with semantic search and pin tray |
 | Jan 1–31, 2027 | P3 · Features — Program Detail Pages | Full program detail pages, curriculum timeline visualiser, PLO spider chart |
 | Jan 1–31, 2027 | P3 · Features — Portfolio Coach | Portfolio readiness checker (top 10 programs) |
@@ -508,7 +529,18 @@ Four phases across April 2026 – March 2027. P1 Foundation: Apr 1–12; P2 Core
 
 ---
 
-## Chapter 6 — Deliverables
+## Chapters 5.1–5.3 (Hidden in Proposal)
+
+**Sections 5.1–5.3 are not included in the proposal version:**
+- 5.1 Development Methodology
+- 5.2 Technology Stack
+- 5.3 Coding Standards
+
+These full technical details remain in the complete SRS document but are omitted from the condensed proposal for brevity.
+
+---
+
+## Chapter 6 — Deliverables (Hidden in Proposal)
 
 ### 6.1 Software Solution
 
@@ -526,15 +558,17 @@ Three testing levels:
 - **Integration tests:** End-to-end API tests for each major user flow (interest discovery to recommendation, chatbot query to grounded response). Run automatically on each PR via GitHub Actions.
 - **User tests:** Manual usability testing sessions with 10–15 participants, structured task script and SUS questionnaire.
 
+**Note:** Chapter 6 (Deliverables) is not included in the proposal version. See the full SRS for complete details on deliverables and test reports.
+
 ---
 
-## Chapter 7 — Conclusion and Discussion
+## Chapter 7 — Conclusion and Discussion (Hidden in Proposal)
 
 ### 7.1 Summary of Achievements
 
 *(To be completed at project conclusion.)*
 
-### 7.2 Known Limitations
+**Note:** Chapter 7 (Conclusion and Discussion) is not included in the proposal version. The full SRS document contains limitations, known issues, and future work roadmap. See key points below that remain relevant to the proposal scope.
 
 1. **TCAS data currency:** TCAS requirements change each academic year. Requires manual data updates at the start of each TCAS cycle; no automatic change detection.
 
