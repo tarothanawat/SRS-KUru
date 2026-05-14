@@ -5,7 +5,7 @@
 \label{section:stakeholder-analysis}
 
 \begin{itemize}[leftmargin=80pt]
-    \item \textbf{High school students (prospective KU applicants):} Primary users. Need personalized program recommendations, PLO-based skill previews, career path information, and structured TCAS guidance. Low technical proficiency expected; interface must be accessible and engaging.
+    \item \textbf{High school students (prospective KU applicants):} Primary users. Need personalized program recommendations, PLO-based skill previews, curriculum evidence, and structured TCAS guidance. Low technical proficiency expected; interface must be accessible and engaging. Career-path information is treated as a Phase~2 extension.
 
     \item \textbf{KU Faculty / Academic Advisors:} Data providers. Provide มคอ.2 curriculum documents and TCAS admission data. Indirect beneficiaries through reduced advising load and better-prepared incoming students.
 
@@ -29,20 +29,59 @@
 
     \item As a high school student, I want to ask questions about a program's curriculum in Thai so that I can get specific answers without reading long PDF documents.
 
-    \item As a high school student, I want to save programs I am considering so that I can return to compare them later.
+    \item As a high school student, I want to bookmark programs I am considering so that I can return to them later. Multi-program comparison is a Phase~2 target-system workflow.
 \end{itemize}
 
 \subsection{Additional User Stories}
 \label{subsection:additional-user-stories}
 
 \begin{itemize}[leftmargin=80pt]
-    \item As a returning visitor, I want my saved RIASEC interest profile and bookmarked programs to be available when I come back so that I do not have to start over.
+    \item As a returning visitor, I want my saved RIASEC interest profile and bookmarked programs to be available when I come back so that I do not have to start over. Persistent login-based storage is a Phase~2 enhancement unless time remains after MVP evaluation.
 
-    \item As a parent, I want to browse KU programs and understand what careers they lead to so that I can support my child's decision.
+    \item As a parent, I want to browse KU programs and understand their curriculum, PLOs, and admission requirements so that I can support my child's decision.
 \end{itemize}
 
 \subsection{Key Use Cases}
 \label{subsection:key-use-cases}
+
+\noindent Table~\ref{tab:use-case-mvp-status} classifies each use case by MVP evaluation status. Use cases marked Phase~2 remain part of the target product vision but are excluded from MVP pass/fail evaluation.
+
+\begin{table}[htbp]
+\centering
+\small
+\renewcommand{\arraystretch}{1.5}
+\caption{Use Case MVP Status}
+\label{tab:use-case-mvp-status}
+\begin{tabularx}{\textwidth}{|L{1.8cm}|Y|Y|}
+\hline
+\textbf{Use Case} & \textbf{Name} & \textbf{MVP Status} \\
+\hline
+UC-01 & Discover Interests & In scope. Evaluated through completion rate and usability. \\
+\hline
+UC-02 & View Program Recommendations & In scope, simplified to Pipeline~B2 semantic curriculum matching. Pipeline~A and Neo4j Pipeline~B1 are Phase~2. \\
+\hline
+UC-03 & Explore PLO Spider Chart & Partial. Static PLO/profile chart only in MVP. Student overlay and graph-derived skill mapping are Phase~2. \\
+\hline
+UC-04 & Query KUru Advisor & In scope. Evaluated with RAGAS plus custom TCAS/fee regression checks. \\
+\hline
+UC-05 & View TCAS Admission Guide & Partial. TCAS data appears in program detail pages and chatbot answers. Standalone guide and comparison are Phase~2. \\
+\hline
+UC-06 & Explore Career Paths & Phase~2. \\
+\hline
+UC-07 & Refine Profile Through Implicit Signals & Phase~2. \\
+\hline
+UC-08 & Explain Why a Program Was Recommended & In scope. Explanation must cite the retrieved curriculum evidence used in the simplified recommendation. \\
+\hline
+UC-09 & Search Programs Semantically & In scope. Natural-language semantic search over indexed program content and metadata. \\
+\hline
+UC-10 & Pin Programs and Compare & Phase~2. \\
+\hline
+UC-11 & View Curriculum Timeline & Phase~2. \\
+\hline
+UC-12 & Portfolio Readiness Check & Phase~2. \\
+\hline
+\end{tabularx}
+\end{table}
 
 \noindent\textbf{UC-01: Discover Interests}
 
@@ -62,7 +101,7 @@
 
 \noindent\textit{Alternative Flow --- Targeted re-elicitation:} If invoked from UC-02 with specific RIASEC dimensions flagged for clarification, the system skips Steps~1--2 and begins directly at Step~3, presenting only pairwise questions targeting the flagged dimensions. Steps~4--6 run normally. This path is triggered when the student selects ``No'' on the profile correction prompt in UC-02.
 
-\noindent\textit{Postcondition:} Student has a RIASEC-grounded interest profile used as input to the career matching and program recommendation pipeline. Total elicitation time is 2--4 minutes across 12 steps.
+\noindent\textit{Postcondition:} Student has a RIASEC-grounded interest profile used as input to the MVP program recommendation pipeline. Total elicitation time is 2--4 minutes across 12 steps. Career matching is Phase~2.
 
 \vspace{1ex}
 \noindent\textbf{UC-02: View Program Recommendations}
@@ -73,15 +112,16 @@
 
 \noindent\textit{Main Flow:}
 \begin{enumerate}[leftmargin=80pt]
-    \item System runs Pipeline~A: queries precomputed O*NET occupation RIASEC interest profiles in Supabase pgvector for occupations with the highest cosine similarity to the student's RIASEC vector. Top 10--15 occupations form the internal career space. An A-score is computed per KU program based on career-program pathway alignment.
-    \item System runs Pipeline~B concurrently: (B1) queries Neo4j for KU programs whose PLO SkillCluster profiles best match the student's RIASEC-derived SkillCluster weight vector via cosine similarity; (B2) runs semantic search over course description embeddings in Supabase pgvector using the student's interest query. B-score $= 0.4 \times \text{B1} + 0.6 \times \text{B2}$.
-    \item System synthesises a final score: $0.35 \times \text{A-score} + 0.65 \times \text{B-score}$. Programs are ranked by final score. Top-$N$ programs selected for display.
-    \item System displays ranked program cards, each showing fit score, matched career paths from Pipeline~A, curriculum alignment themes from Pipeline~B, and a plain-language explanation generated by Gemini grounded in both signals.
+    \item System converts the student's RIASEC profile into a semantic interest query and structured weighting used for curriculum-side matching.
+    \item System runs MVP Pipeline~B2: semantic search over indexed program, PLO, and course-description embeddings in Supabase pgvector.
+    \item System aggregates retrieved evidence by program and computes a curriculum-fit score from semantic similarity and available structured metadata.
+    \item Programs are ranked by curriculum-fit score. Top-$N$ programs are selected for display.
+    \item System displays ranked program cards, each showing fit score, matched curriculum themes, and a plain-language explanation grounded in retrieved program evidence.
     \item Student can tap any card to navigate to the full program detail page at \texttt{/programs/[program-id]} --- a full-page view, not a modal.
     \item System presents a profile correction prompt --- ``Do these recommendations feel right?'' --- on the first visit to the recommendation screen. If the student selects ``No'', the system returns them to a targeted re-elicitation of the RIASEC dimensions most influential in the current ranking, preventing a poor initial vector from entering the interaction log.
 \end{enumerate}
 
-\noindent\textit{Postcondition:} Student sees a ranked list of KU programs with recommendations traceable from their interests through real-world careers to specific program outcomes via two independent evidence paths.
+\noindent\textit{Postcondition:} Student sees a ranked list of KU programs with recommendations traceable from their interests to retrieved curriculum evidence. The full two-signal target architecture with O*NET and Neo4j is deferred to Phase~2.
 
 \vspace{1ex}
 \noindent\textbf{UC-03: Explore PLO Spider Chart}
@@ -93,12 +133,12 @@
 \noindent\textit{Main Flow:}
 \begin{enumerate}[leftmargin=80pt]
     \item Student selects a KU program from the recommendation list.
-    \item System retrieves PLO data from Supabase and skill mappings from Neo4j.
-    \item System renders an interactive radar (spider) chart showing the skill profile the program develops.
-    \item Student's interest profile is overlaid on the chart for visual fit comparison.
+    \item System retrieves available PLO/profile data from Supabase.
+    \item System renders a static radar or profile chart showing the skill or outcome profile the program develops.
+    \item In Phase~2, the student's interest profile may be overlaid on the chart for visual fit comparison.
 \end{enumerate}
 
-\noindent\textit{Postcondition:} Student has a visual understanding of the skills a program builds and how well its PLO skill profile aligns with their RIASEC interest vector.
+\noindent\textit{Postcondition:} Student has a visual understanding of the skills or outcomes a program builds. Interactive personal-fit overlay is outside MVP scope.
 
 \vspace{1ex}
 \noindent\textbf{UC-04: Query KUru Advisor}
@@ -110,7 +150,7 @@
 \noindent\textit{Main Flow:}
 \begin{enumerate}[leftmargin=80pt]
     \item Student enters a question in Thai or English in the chat interface.
-    \item System embeds the query using Gemini text-embedding-001.
+    \item System embeds the query locally using \texttt{intfloat/multilingual-e5-base}.
     \item System retrieves the top semantically relevant มคอ.2 document chunks from pgvector.
     \item System passes the chunks and question to Gemini 2.5 Flash with a strict citation instruction.
     \item System displays the generated answer with inline มคอ.2 source citation badges.
@@ -130,15 +170,18 @@
 
 \noindent\textit{Main Flow:}
 \begin{enumerate}[leftmargin=80pt]
-    \item Student navigates to the TCAS Guide for a faculty they are interested in.
-    \item System displays a structured breakdown of applicable rounds, score requirements (GPAX, TGAT/TPAT/A-Level), portfolio criteria, and deadlines.
-    \item Student can filter by round and view side-by-side comparisons of faculties.
+    \item Student opens a program detail page or asks a TCAS-related question through KUru Advisor.
+    \item System displays or generates a grounded answer from available TCAS records, including applicable rounds, score requirements (GPAX, TGAT/TPAT/A-Level), portfolio criteria, fees, and deadlines where available.
+    \item If the requested TCAS field is missing from the ingested data, the system states that the information is not available rather than inferring an answer.
+    \item In Phase~2, students can navigate a standalone TCAS guide, filter by round, and compare faculties side by side.
 \end{enumerate}
 
-\noindent\textit{Postcondition:} Student understands the specific admission requirements they need to prepare for.
+\noindent\textit{Postcondition:} Student understands the specific admission requirements available for the selected program or query, with missing information clearly identified.
 
 \vspace{1ex}
 \noindent\textbf{UC-06: Explore Career Paths}
+
+\noindent\textit{MVP status:} Phase~2 target-system use case; excluded from MVP pass/fail evaluation.
 
 \noindent\textit{Actor:} Guest / High School Student
 
@@ -158,6 +201,8 @@
 
 \vspace{1ex}
 \noindent\textbf{UC-07: Refine Profile Through Implicit Signals}
+
+\noindent\textit{MVP status:} Phase~2 target-system use case; excluded from MVP pass/fail evaluation.
 
 \noindent\textit{Actor:} Registered User
 
@@ -184,7 +229,7 @@
 
 \noindent\textit{Note on guest users:} Interaction signals are only logged persistently for registered users. Guest interactions are tracked within the current session only and do not update $\alpha$ across visits. Guests always begin a new session at $\alpha = 1.0$ (pure RIASEC recommendations).
 
-\noindent\textit{Postcondition:} Recommendation ranking becomes progressively more personalised to the student's actual behaviour without requiring additional questionnaire steps. The underlying RIASEC vector from elicitation remains fixed; the behavioural fit score is derived from the individual student's own interaction history (not from other users) and operates as a separate signal blended at ranking time via $\alpha$. True collaborative filtering --- using patterns from students with similar profiles --- is deferred to Phase~2 (see Section~\ref{section:future-work}).
+\noindent\textit{Postcondition:} Recommendation ranking becomes progressively more personalised to the student's actual behaviour without requiring additional questionnaire steps. The underlying RIASEC vector from elicitation remains fixed; the behavioural fit score is derived from the individual student's own interaction history (not from other users) and operates as a separate signal blended at ranking time via $\alpha$. True collaborative filtering --- using patterns from students with similar profiles --- is deferred to Phase~2.
 
 \vspace{1ex}
 \noindent\textbf{UC-08: Explain Why a Program Was Recommended}
@@ -196,12 +241,12 @@
 \noindent\textit{Main Flow:}
 \begin{enumerate}[leftmargin=80pt]
     \item Student taps ``ทำไมถึงแนะนำคณะนี้?'' (Why was this recommended?) on any program card.
-    \item System retrieves the full reasoning chain from both pipelines: Pipeline~A --- student RIASEC vector $\rightarrow$ matched O*NET occupations $\rightarrow$ career alignment score; Pipeline~B --- student RIASEC vector $\rightarrow$ SkillCluster weights $\rightarrow$ Neo4j PLO match + course content semantic match. Both signals contributed to this program's ranking.
-    \item System generates a plain-language explanation via Gemini referencing both signals: ``Based on your interest in [topic], careers like [Y] and [Z] align with your profile. This program was also strongly matched based on its curriculum content --- specifically courses in [X] and [Y] which directly address your interest areas.''
-    \item Student can tap any career name in the explanation to navigate to its full detail in UC-06.
+    \item System retrieves the MVP reasoning chain: student RIASEC profile $\rightarrow$ semantic curriculum query $\rightarrow$ retrieved program/PLO/course evidence $\rightarrow$ curriculum-fit score.
+    \item System generates a plain-language explanation via Gemini referencing the retrieved evidence: ``Based on your interest in [topic], this program was strongly matched because its curriculum includes [X] and [Y].''
+    \item In Phase~2, explanations may also include O*NET career matches and Neo4j PLO-skill paths.
 \end{enumerate}
 
-\noindent\textit{Postcondition:} Student understands the specific chain of reasoning behind a recommendation and can verify each step themselves.
+\noindent\textit{Postcondition:} Student understands the specific curriculum evidence behind a recommendation and can verify the cited source material.
 
 \vspace{1ex}
 \noindent\textbf{UC-09: Search Programs Semantically}
@@ -213,16 +258,18 @@
 \noindent\textit{Main Flow:}
 \begin{enumerate}[leftmargin=80pt]
     \item Student enters a natural language query in Thai or English in the semantic search bar on the PLO Explorer (e.g., ``หลักสูตรที่เรียน AI เน้นโปรเจกต์ รับ TGAT ต่ำ'').
-    \item System uses Gemini to parse the query into a structured constraint object: topic areas, teaching methods, TCAS requirements, campus preferences.
-    \item System executes a multi-source parallel query: Neo4j for topic/skill constraints, Supabase for TCAS constraints, pgvector for semantic content matching against course descriptions.
+    \item System embeds the query and optionally parses visible constraints such as topic areas, TCAS requirements, campus preferences, or teaching methods.
+    \item System executes semantic search against Supabase/pgvector and available structured metadata for indexed programs.
     \item System returns ranked program cards matching the constraints, with an explanation of which constraints each program satisfies.
-    \item Student can refine the query or apply faceted filters (faculty, program level, TCAS round).
+    \item Student can refine the query or apply faceted filters (faculty, program level, TCAS round) where metadata is available.
 \end{enumerate}
 
 \noindent\textit{Postcondition:} Student finds programs matching specific criteria without browsing the full catalogue.
 
 \vspace{1ex}
 \noindent\textbf{UC-10: Pin Programs and Compare}
+
+\noindent\textit{MVP status:} Phase~2 target-system use case; excluded from MVP pass/fail evaluation.
 
 \noindent\textit{Actor:} Guest / High School Student
 
@@ -242,6 +289,8 @@
 \vspace{1ex}
 \noindent\textbf{UC-11: View Curriculum Timeline}
 
+\noindent\textit{MVP status:} Phase~2 target-system use case; excluded from MVP pass/fail evaluation.
+
 \noindent\textit{Actor:} Guest / High School Student
 
 \noindent\textit{Precondition:} Student is on a program detail page.
@@ -260,6 +309,8 @@
 \vspace{1ex}
 \noindent\textbf{UC-12: Portfolio Readiness Check}
 
+\noindent\textit{MVP status:} Phase~2 target-system use case; excluded from MVP pass/fail evaluation.
+
 \noindent\textit{Actor:} Guest / High School Student
 
 \noindent\textit{Precondition:} Student has a portfolio PDF. Target program has portfolio criteria data ingested.
@@ -267,7 +318,7 @@
 \noindent\textit{Main Flow:}
 \begin{enumerate}[leftmargin=80pt]
     \item Student navigates to the Portfolio Coach from the nav bar, a program detail page, or the pin tray.
-    \item Student selects target program(s) (MVP: from top 10 supported programs) and uploads their portfolio PDF.
+    \item Student selects target program(s) from the supported Phase~2 portfolio-checking set and uploads their portfolio PDF.
     \item System uses Gemini to extract a structured portfolio profile: activities classified by type and level, GPAX, certificates, personal statement presence.
     \item System retrieves the pre-extracted faculty criteria schema for the selected program(s).
     \item System performs a four-part gap analysis: (1) hard threshold eligibility check; (2) required item coverage; (3) preferred item strength assessment with level-aware scoring; (4) qualitative criteria assessment using multi-step Gemini reasoning.
@@ -299,9 +350,9 @@
 
     \item \textbf{Scalability:} The system must support at least 100 concurrent users during peak TCAS periods without degradation of the above response time targets. Supabase connection pooling and Vercel's serverless deployment model are relied upon to meet this target without custom infrastructure.
 
-    \item \textbf{Security:} All user authentication is delegated to Supabase Auth (OAuth 2.0 / magic link). Portfolio PDFs uploaded for the Portfolio Readiness Checker are processed ephemerally via the Gemini API and are not retained on the server after processing. API keys for Gemini and Neo4j are stored as environment variables and never exposed to the client.
+    \item \textbf{Security:} All user authentication is delegated to Supabase Auth (OAuth 2.0 / magic link) where login-based features are enabled. Portfolio PDF processing is Phase~2; when implemented, uploaded documents are processed ephemerally via the Gemini API and are not retained on the server after processing. API keys for Gemini and Neo4j are stored as environment variables and never exposed to the client.
 
-    \item \textbf{Data Privacy (PDPA):} Portfolio PDFs and interest profiles contain personal data. In accordance with Thailand's Personal Data Protection Act B.E. 2562 (PDPA), users are notified of data usage at the point of upload. Guest interaction data is session-scoped and not persisted. Registered users may delete their stored profile and interaction history at any time via the dashboard.
+    \item \textbf{Data Privacy (PDPA):} Interest profiles and any future portfolio PDFs contain personal data. In accordance with Thailand's Personal Data Protection Act B.E. 2562 (PDPA), users are notified of data usage when profile storage or upload features are used. Guest interaction data is session-scoped and not persisted. Registered users may delete their stored profile and interaction history at any time via the dashboard once Phase~2 persistence is enabled.
 
     \item \textbf{Accessibility:} The interface must meet WCAG 2.1 Level AA contrast requirements. All interactive elements must have accessible labels for screen reader compatibility. Thai and English language switching must be available on every screen.
 
@@ -342,27 +393,27 @@ The twelve-step adaptive elicitation flow collects the student's RIASEC profile.
 \end{figure}
 
 \paragraph{Recommendation Results (ผลพัจน์).}
-After elicitation, the system presents a personalised results page structured in three sections: (1) the student's RIASEC profile card displaying their Holland Code and top dimensions; (2) matched O*NET occupations via Pipeline~A, each showing a fit percentage, required skills, and linked KU programs; (3) ranked KU program cards with fit scores derived from Pipeline~B. On first visit, a profile correction prompt allows the student to trigger targeted re-elicitation if the ranking does not feel right.
+After elicitation, the MVP presents a personalised results page structured in two sections: (1) the student's RIASEC profile card displaying their Holland Code and top dimensions; and (2) ranked KU program cards with curriculum-fit scores derived from Pipeline~B2 semantic matching. Each card links the fit score to retrieved curriculum evidence. On first visit, a profile correction prompt allows the student to trigger targeted re-elicitation if the ranking does not feel right. O*NET career cards and the full hybrid Pipeline~A+B ranking are Phase~2.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.85\textwidth]{mock-ui/riasec-to-career-recommendation.png}
-    \caption{Recommendation results page --- RIASEC profile summary (top), matched O*NET careers with fit scores (middle), and ranked KU program cards (bottom).}
+    \caption{Recommendation results page --- MVP shows the RIASEC profile summary and ranked curriculum-evidence program cards; O*NET career cards shown in the mockup are Phase~2.}
     \label{fig:ui-recommendation}
 \end{figure}
 
 \paragraph{Program Explorer (สำรวจหลักสูตร).}
-A browsable and semantically searchable directory of KU programs. Each program card displays the PLO fit score, faculty tag, estimated TCAS score range, and entry-round badges. Students can filter by faculty or keyword and pin up to four programs to a persistent comparison tray at the top of the page.
+A browsable and semantically searchable directory of KU programs. In the current POC and evaluated MVP, each program card displays available program metadata, faculty/campus tags, curriculum/PLO evidence summaries, and available TCAS or fee fields. Students can filter by faculty or keyword and search using natural-language Thai or English queries. Pin-tray comparison is Phase~2.
 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.95\textwidth]{mock-ui/program-explorer.png}
-    \caption{Program explorer --- grid of ranked program cards with PLO fit scores, faculty tags, and TCAS score ranges. The search bar supports natural language queries in Thai and English.}
+    \caption{Program explorer --- grid of program cards with available curriculum, faculty, and TCAS metadata. The search bar supports natural language queries in Thai and English.}
     \label{fig:ui-explorer}
 \end{figure}
 
 \paragraph{KUru Advisor (แชทกับ KUru).}
-A RAG-powered conversational interface for querying curriculum and TCAS information. The chatbot answers natural language questions in Thai and English, grounding responses in ingested มคอ.2 documents and TCAS admission data. Each response includes source citations (document name and page). When programs are pinned, the chatbot supports multi-program context queries.
+A RAG-powered conversational interface for querying curriculum and TCAS information. The chatbot answers natural language questions in Thai and English, grounding responses in ingested มคอ.2 documents and TCAS admission data. Each response includes source citations (document name and page). Multi-program pinned context is Phase~2.
 
 \begin{figure}[htbp]
     \centering
@@ -371,7 +422,7 @@ A RAG-powered conversational interface for querying curriculum and TCAS informat
     \label{fig:ui-chatbot}
 \end{figure}
 
-\paragraph{Portfolio Coach.}
+\paragraph{Portfolio Coach (Phase~2).}
 A two-step portfolio readiness checker accessible from the navigation bar, program detail page, or pin tray. In the first step the student uploads portfolio documents (PDF or image). In the second step the system displays a readiness score, a gap analysis comparing the student's credentials against the target program's admission criteria, and a checklist of fulfilled and missing items.
 
 \begin{figure}[htbp]
@@ -385,21 +436,21 @@ A two-step portfolio readiness checker accessible from the navigation bar, progr
         \centering
         \includegraphics[width=\textwidth]{mock-ui/portfolio-coach-analysis.png}
     \end{minipage}
-    \caption{Portfolio Coach: (left) document upload screen accepting portfolio PDFs and transcript images; (right) analysis results showing a 75\% readiness score for Computer Engineering, with GPAX and competition award criteria marked as fulfilled.}
+    \caption{Portfolio Coach Phase~2 mockup: (left) document upload screen accepting portfolio PDFs and transcript images; (right) analysis results showing a readiness score and criteria checklist.}
     \label{fig:ui-portfolio}
 \end{figure}
 
 \paragraph{Program Detail Page.}
-Full-page view at \texttt{/programs/[program-id]} --- not a modal --- to support URL sharing, extended reading, and mobile scrolling. Contains: hero section with program identity, career section (matched occupations from Pipeline~A), curriculum timeline tab (year-by-year visualiser via UC-11), PLO radar chart overlaid with the student's interest profile, TCAS section with personal eligibility check, and portfolio checker entry point (UC-12).
+Full-page view at \texttt{/programs/[program-id]} --- not a modal --- to support URL sharing, extended reading, and mobile scrolling. The MVP page contains program identity, curriculum/PLO evidence, available TCAS information, source-linked chatbot context, and a static PLO/profile chart where extracted data is available. Career sections, curriculum timeline tabs, personal eligibility checking, portfolio checker entry points, and PLO overlay are Phase~2.
 
-\paragraph{Program Comparison View.}
+\paragraph{Program Comparison View (Phase~2).}
 Side-by-side comparison triggered from the pin tray (UC-10). Shows overlaid PLO radar charts, career path overlap, curriculum character profile across five dimensions, TCAS accessibility per round, and RIASEC fit scores for up to four pinned programs simultaneously.
 
-\paragraph{Career Explorer.}
+\paragraph{Career Explorer (Phase~2).}
 List of O*NET occupations matched to the student's RIASEC profile via Pipeline~A. Each card shows the Thai-localised occupation title, required skill clusters, and the KU programs that develop those skills.
 
 \paragraph{TCAS Guide.}
 Faculty-specific breakdown of applicable admission rounds, score requirements (GPAX, TGAT, TPAT, A-Level), portfolio criteria, and application deadlines, drawn from the ingested TCAS dataset.
 
-\paragraph{Saved Profile Dashboard.}
+\paragraph{Saved Profile Dashboard (Phase~2).}
 Bookmarked programs, TCAS deadline tracker, interest profile summary, and a before/after comparison of recommendation ranking shifts over time. Requires student login.

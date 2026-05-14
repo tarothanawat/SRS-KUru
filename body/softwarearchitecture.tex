@@ -4,7 +4,19 @@
 \section{System Architecture Overview}
 \label{section:architecture-overview}
 
-KUru is a three-tier web application with a distinct AI layer. The frontend (Next.js) communicates with a Python FastAPI backend, which orchestrates two AI subsystems: a RAG pipeline for curriculum Q\&A and a graph-based recommendation engine. Both subsystems read from a shared data layer consisting of Supabase (PostgreSQL + pgvector for embeddings) and Neo4j (knowledge graph on Railway).
+KUru is a three-tier web application with a distinct AI layer. The frontend (Next.js) communicates with a Python FastAPI backend, which orchestrates grounded retrieval, recommendation, and structured program-data services. The architecture is described in two layers: the evaluated MVP architecture and the target-system architecture.
+
+\subsection{Evaluated MVP Architecture}
+\label{subsection:mvp-architecture}
+
+The evaluated MVP uses Supabase PostgreSQL with pgvector as the primary data layer. The backend supports: (1) a structured RAG pipeline for curriculum, TCAS, and fee Q\&A; (2) RIASEC interest-profile storage and scoring; (3) simplified Pipeline~B2 recommendation based on semantic matching against indexed program, PLO, and course content; (4) semantic program search; and (5) static PLO/profile visualisation. Gemini 2.5 Flash Lite via OpenRouter is used for grounded answer generation and explanation, while local multilingual E5 embeddings are used for Thai-English retrieval.
+
+Neo4j, O*NET career matching, behavioural re-ranking, portfolio checking, program comparison, and curriculum timeline generation are not required for MVP pass/fail evaluation. They remain part of the target-system design.
+
+\subsection{Target-System Architecture}
+\label{subsection:target-architecture}
+
+The target system extends the MVP with a Neo4j knowledge graph connecting faculties, PLOs, skill clusters, and careers; O*NET occupation matching; behavioural personalisation; portfolio readiness analysis; curriculum timeline extraction; and multi-program comparison. In that target architecture, both RAG and recommendation read from a shared data layer consisting of Supabase (PostgreSQL + pgvector for embeddings) and Neo4j (knowledge graph on Railway).
 
 \begin{figure}[p]
     \centering
@@ -13,7 +25,7 @@ KUru is a three-tier web application with a distinct AI layer. The frontend (Nex
     \label{fig:system-architecture}
 \end{figure}
 
-Figure~\ref{fig:domain-model} shows the domain model: the eleven core entities and their relationships. A \textbf{Student} holds one \textbf{RIASECProfile} (the normalised 6-dimensional interest vector produced by UC-01) and generates \textbf{InteractionLog} entries as they browse. Each \textbf{Program} belongs to a \textbf{Faculty}, which defines its \textbf{PLO}s and publishes \textbf{PortfolioCriteria}. PLOs are linked to \textbf{SkillCluster} nodes in Neo4j (the \textit{develops} relationship), and \textbf{Career} nodes are linked to the same clusters (the \textit{requires} relationship) --- this shared vocabulary enables the multi-hop recommendation path from student interests to program outcomes. \textbf{TCASRecord} and \textbf{Course} are extracted structured layers stored in Supabase alongside the vector embeddings.
+Figure~\ref{fig:domain-model} shows the target-system domain model: the eleven core entities and their relationships. The MVP implements the subset centred on \textbf{Student}, \textbf{RIASECProfile}, \textbf{Program}, \textbf{Faculty}, \textbf{PLO}, \textbf{TCASRecord}, and \textbf{Course} stored in Supabase. Phase~2 adds persistent \textbf{InteractionLog}, \textbf{PortfolioCriteria}, \textbf{SkillCluster}, and \textbf{Career} relationships through Neo4j. In the target system, PLOs are linked to \textbf{SkillCluster} nodes in Neo4j (the \textit{develops} relationship), and \textbf{Career} nodes are linked to the same clusters (the \textit{requires} relationship) --- this shared vocabulary enables the multi-hop recommendation path from student interests to program outcomes.
 
 \begin{figure}[htbp]
     \centering
@@ -28,7 +40,7 @@ Figure~\ref{fig:domain-model} shows the domain model: the eleven core entities a
 \subsection{RAG Pipeline Sequence}
 \label{subsection:rag-pipeline}
 
-When a user submits a query to the curriculum chatbot: (1) the query is embedded using Gemini text-embedding-001; (2) the embedding is used to perform a cosine similarity search against the pgvector store of มคอ.2 document chunks; (3) the top-$k$ retrieved chunks are assembled into a prompt context along with the user query and the conversation history; (4) Gemini 2.5 Flash generates a grounded response in the requested language; (5) source citations are appended to the response.
+When a user submits a query to the curriculum chatbot: (1) the query is embedded locally using \texttt{intfloat/multilingual-e5-base}; (2) the embedding is used to perform a cosine similarity search against the pgvector store of มคอ.2 document chunks; (3) the top-$k$ retrieved chunks are assembled into a prompt context along with the user query and the conversation history; (4) Gemini 2.5 Flash Lite via OpenRouter generates a grounded response in the requested language; (5) source citations are appended to the response.
 
 \begin{figure}[p]
     \centering
@@ -40,10 +52,24 @@ When a user submits a query to the curriculum chatbot: (1) the query is embedded
 \subsection{Recommendation Pipeline Sequence}
 \label{subsection:recommendation-pipeline}
 
-When a student completes the interest discovery flow, the recommendation pipeline proceeds in five stages using two independent parallel signals:
+For the evaluated MVP, recommendation uses the simplified Pipeline~B2 path. RIASEC is not treated as proof that a student will be satisfied with a program after graduation. Instead, it is used as an interest signal that can be converted into curriculum search intent. When a student completes the interest discovery flow, the backend converts the RIASEC profile into interest themes and a semantic query, retrieves semantically similar program/PLO/course chunks from Supabase pgvector, aggregates evidence by program, computes a curriculum-fit score, and generates a cited plain-language explanation from the retrieved evidence. This is the recommendation behaviour evaluated for MVP pass/fail.
+
+For example, a high Investigative--Realistic profile is converted into themes such as analysis, problem solving, systems, technical design, experiments, and hands-on laboratory work. These themes are embedded as a semantic query and matched against curriculum evidence such as PLOs, course descriptions, project-based learning statements, laboratory requirements, and technical skill outcomes. A program ranks highly only when retrieved curriculum chunks support the match.
+
+\begin{figure}[htbp]
+    \centering
+    \fbox{\parbox{0.92\textwidth}{
+    \textbf{MVP recommendation flow:}
+    RIASEC answers $\rightarrow$ 6D RIASEC profile $\rightarrow$ top dimensions / Holland code $\rightarrow$ interest themes and semantic query $\rightarrow$ Supabase/pgvector search over program, PLO, and course chunks $\rightarrow$ group evidence by program $\rightarrow$ curriculum-fit score $\rightarrow$ ranked programs with evidence-grounded explanation.
+    }}
+    \caption{MVP Recommendation Pipeline: RIASEC-to-Curriculum Semantic Matching}
+    \label{fig:mvp-recommendation-pipeline}
+\end{figure}
+
+The full target-system recommendation pipeline proceeds in five stages using two independent parallel signals:
 
 \begin{enumerate}[leftmargin=80pt]
-    \item \textbf{RIASEC vector construction.} The twelve-step adaptive elicitation (UC-01) produces a weighted 6-dimensional RIASEC vector. Steps~1--6 (Likert screens) produce raw scores per dimension (max 20 each). Step~7 applies a global confidence scalar (1.0, 0.75, or 0.5). Step~8 (adaptive pairwise) adjusts scores for dimension pairs with delta $< 3$. Steps~9--11 (scenario questions) adjust scores proportionally per response. Step~12 applies the optional dealbreaker filter, zeroing out explicitly rejected dimensions. The resulting vector is L2-normalised to a unit vector before use in Pipeline~A and Pipeline~B.
+    \item \textbf{RIASEC vector construction.} The twelve-step adaptive elicitation (UC-01) produces a weighted 6-dimensional RIASEC vector. Steps~1--6 (Likert screens) produce raw scores per dimension (max 20 each). Step~7 applies a global confidence scalar (1.0, 0.75, or 0.5). Step~8 (adaptive pairwise) adjusts scores for dimension pairs with delta $< 3$. Steps~9--11 (scenario questions) adjust scores proportionally per response. Step~12 applies the optional dealbreaker filter, zeroing out explicitly rejected dimensions. The resulting vector is L2-normalised to a unit vector. The MVP uses this vector to form a Pipeline~B2 curriculum search intent; the target system also uses it in Pipeline~A and Neo4j Pipeline~B1.
 
     \item \textbf{Parallel signal computation.} Two independent pipelines run concurrently:
 
@@ -72,14 +98,14 @@ When a student completes the interest discovery flow, the recommendation pipelin
 \begin{figure}[p]
     \centering
     \includegraphics[height=0.9\textheight, keepaspectratio]{diagrams/recommendation-pipeline.png}
-    \caption{Recommendation Pipeline — Five Stages with Two Parallel Signals}
+    \caption{Phase~2 Target-System Recommendation Pipeline --- Five Stages with Two Parallel Signals}
     \label{fig:recommendation-pipeline}
 \end{figure}
 
 \subsection{Interest Elicitation Flow}
 \label{subsection:elicitation-flow}
 
-The interest elicitation flow (UC-01) produces the RIASEC vector that seeds both the recommendation pipeline and the career explorer. The flow is adaptive: the pairwise comparison step (Step~8) is shown only when at least one dimension pair has a score delta below the 3-point ambiguity threshold; students with a clearly differentiated Likert profile skip directly to the scenario questions. Figure~\ref{fig:elicitation-flow} shows the full conditional logic from entry to RIASEC vector output.
+The interest elicitation flow (UC-01) produces the RIASEC vector that seeds the MVP recommendation pipeline. In Phase~2, the same vector can also seed the Career Explorer. The flow is adaptive: the pairwise comparison step (Step~8) is shown only when at least one dimension pair has a score delta below the 3-point ambiguity threshold; students with a clearly differentiated Likert profile skip directly to the scenario questions. Figure~\ref{fig:elicitation-flow} shows the full conditional logic from entry to RIASEC vector output.
 
 \begin{figure}[p]
     \centering
@@ -99,13 +125,13 @@ The interest elicitation flow (UC-01) produces the RIASEC vector that seeds both
 
     \item \textbf{O*NET occupational database \cite{onet2024}:} Publicly available from the US Department of Labor. Contains two data layers used by KUru: (a) \textit{Interests} --- the RIASEC profile for each occupation, derived from surveys of employed workers, used for career matching from the student's RIASEC vector; and (b) \textit{Skills} --- 35 standardized skills per occupation with importance and level scores, displayed in the Career Explorer (UC-06) to show students what skills their matched careers require. Not used as a bridge to Neo4j in the ranking pipeline --- Pipeline~B1 queries Neo4j directly from the RIASEC-derived SkillCluster weight vector. Downloaded as structured data (CSV/JSON). Occupation titles are mapped to Thai equivalents for student-facing display; skill and interest data are used directly as the underlying structure is language-independent.
 
-    \item \textbf{TCAS admission data:} Ingested from three sources in priority order. (1)~\textit{KU faculty-provided project PDFs} received via Google Drive --- each PDF (e.g., โครงการช้างเผือก.pdf) may contain admission records for multiple programs across multiple faculties. A batch downloader retrieves all PDFs recursively. Each PDF is classified as tcas / mko2 / portfolio / unknown using rule-based keyword detection on the first page. TCAS PDFs are processed by a structured extraction pipeline using Gemini to parse per-program TCASRecord objects covering project name, round, faculty, program name, quota, GPAX minimum, exam score criteria, portfolio requirements, and application deadlines. (2)~\textit{mytcas.com} --- scraped as a gap-filling layer for programs not covered by faculty PDFs, using the mytcas\_code field in the canonical program registry. (3)~\textit{Faculty portfolio criteria PDFs} --- processed separately using Gemini structured extraction to produce per-faculty, per-round criteria schemas for the Portfolio Readiness Checker. All three sources are resolved against a canonical program registry using fuzzy name matching with PyThaiNLP normalization and sequence similarity scoring (threshold 0.85). Records below this threshold are flagged for manual review. A Supabase materialized view (\texttt{programs\_unified}) joins มคอ.2 structured data, TCAS records, and portfolio criteria into a unified program record keyed on program\_id, refreshed after each ingestion run.
+    \item \textbf{TCAS admission data:} Ingested from three sources in priority order. (1)~\textit{KU faculty-provided project PDFs} received via Google Drive --- each PDF (e.g., โครงการช้างเผือก.pdf) may contain admission records for multiple programs across multiple faculties. A batch downloader retrieves all PDFs recursively. Each PDF is classified as tcas / mko2 / portfolio / unknown using rule-based keyword detection on the first page. TCAS PDFs are processed by a structured extraction pipeline using Gemini to parse per-program TCASRecord objects covering project name, round, faculty, program name, quota, GPAX minimum, exam score criteria, portfolio requirements, and application deadlines. (2)~\textit{mytcas.com} --- scraped as a gap-filling layer for programs not covered by faculty PDFs, using the mytcas\_code field in the canonical program registry. (3)~\textit{Faculty portfolio criteria PDFs} --- retained as a Phase~2 source for the Portfolio Readiness Checker rather than an MVP pass/fail requirement. Available sources are resolved against a canonical program registry using fuzzy name matching with PyThaiNLP normalization and sequence similarity scoring (threshold 0.85). Records below this threshold are flagged for manual review. A Supabase materialized view (\texttt{programs\_unified}) joins มคอ.2 structured data, TCAS records, and available admission metadata into a unified program record keyed on program\_id, refreshed after each ingestion run.
 
-    \item \textbf{Interaction log:} Generated by the system as registered users engage with KUru. Stored in Supabase PostgreSQL. Records program saves, card expansions, TCAS guide views, chatbot queries, and card views, each with a timestamp, interaction weight, and associated program identifier. Used to compute the behavioural fit score in Stage~5 of the recommendation pipeline. A background recomputation job updates collaborative scores periodically as new interaction data accumulates.
+    \item \textbf{Interaction log (Phase~2):} Generated by the system as registered users engage with KUru. Stored in Supabase PostgreSQL. Records program saves, card expansions, TCAS guide views, chatbot queries, and card views, each with a timestamp, interaction weight, and associated program identifier. Used to compute the behavioural fit score in Stage~5 of the target-system recommendation pipeline. Not required for MVP pass/fail evaluation.
 
-    \item \textbf{Faculty portfolio criteria documents:} Published by KU faculties for TCAS Round~1 and Round~2 applications. Ingested via the same PDF extraction pipeline as มคอ.2 using Gemini in structured extraction mode to produce a per-faculty, per-round criteria schema. Stored in Supabase PostgreSQL alongside TCAS admission data. Updated at the start of each TCAS cycle. Used by the Portfolio Readiness Checker (Feature~8).
+    \item \textbf{Faculty portfolio criteria documents (Phase~2):} Published by KU faculties for TCAS Round~1 and Round~2 applications. Ingested via the same PDF extraction pipeline as มคอ.2 using Gemini in structured extraction mode to produce a per-faculty, per-round criteria schema. Stored in Supabase PostgreSQL alongside TCAS admission data. Updated at the start of each TCAS cycle. Used by the Portfolio Readiness Checker.
 
-    \item \textbf{Course structure data (extracted layer):} Extracted from มคอ.2 during ingestion as a structured layer stored separately from the embedding chunks. Fields extracted per program per year: course list, credit hour distribution, teaching method breakdown (lecture/lab/project ratios), assessment method types, and sample learning activity descriptions. Stored in Supabase PostgreSQL. Used by the Curriculum Timeline Visualiser (Feature~9).
+    \item \textbf{Course structure data (partial MVP / Phase~2):} Extracted from มคอ.2 during ingestion as a structured layer stored separately from the embedding chunks where available. MVP uses available course and PLO text for RAG, semantic search, and simplified recommendation. Full per-year course timeline visualisation is Phase~2.
 \end{itemize}
 
 มคอ.2 document ingestion uses a six-stage pipeline:
@@ -113,15 +139,15 @@ The interest elicitation flow (UC-01) produces the RIASEC vector that seeds both
 \begin{enumerate}[leftmargin=80pt]
     \item \textbf{PDF classification.} Pages are classified by text density and Thai character density (minimum 20\% Thai Unicode characters for Thai-language documents, minimum 100 characters per page) into born-digital, scanned, pure-image, or mixed types.
 
-    \item \textbf{Tiered text extraction.} Born-digital pages are processed by PyMuPDF directly. Pages failing Thai character density or length checks are re-processed using Typhoon OCR (opentyphoon.ai), a vision-language model purpose-built for Thai and English document extraction that outperforms general-purpose VLMs on Thai government document formats including complex table layouts and mixed Thai/English content. Gemini Vision serves as a secondary fallback if the Typhoon OCR API is unavailable. Pages where both fallbacks fail are flagged for manual review. Each extracted page is tagged with its extraction method (\texttt{pymupdf} / \texttt{typhoon\_ocr} / \texttt{gemini\_vision} / \texttt{failed}) and confidence level for quality monitoring.
+    \item \textbf{Tiered text extraction.} The current curriculum ingestion pipeline first runs PyMuPDF on every PDF page. Pages with very low text yield are rendered to images and sent to Typhoon OCR (\texttt{typhoon-ocr}) when \texttt{TYPHOON\_API\_KEY} is available; recent targeted re-ingests mostly record \texttt{pymupdf+typhoon\_pages}. If the whole PDF remains below the scanned-document threshold, the ingest script treats it as a full scanned PDF and calls the isolated \texttt{ocr\_extractor.extract\_with\_ocr()} path. That full scanned-PDF path uses the configured \texttt{OCR\_MODEL}: by default direct Gemini \texttt{gemini-2.5-flash}, or Typhoon/OpenRouter if explicitly configured, with Tesseract as a last local fallback when vision OCR yields too little text. Each page is tagged with its extraction method (\texttt{pymupdf}, \texttt{typhoon\_page}, \texttt{scanned}, or \texttt{gemini\_ocr}) for coverage reporting.
 
     \item \textbf{Section-aware chunking.} PLO sections, course descriptions, admission requirements, and curriculum structure sections are chunked separately (target 500 tokens, 50-token overlap) to preserve semantic coherence. Each chunk is tagged with section type (\texttt{plo} / \texttt{course} / \texttt{admission} / \texttt{curriculum\_structure} / \texttt{general}).
 
-    \item \textbf{Structured extraction.} PLOs are extracted as typed JSON objects (\texttt{plo\_id}, \texttt{description\_th}, \texttt{description\_en}, \texttt{domain}, \texttt{skill\_keywords}) for Neo4j population. Curriculum structure is extracted as a per-year, per-semester JSON object for the Curriculum Timeline Visualiser.
+    \item \textbf{Structured extraction.} After text extraction and chunking, Gemini text mode (\texttt{LLM\_MODEL=gemini-2.5-flash-lite} by default) extracts program metadata, PLOs, course lists, year timeline fields, and curriculum mapping into structured JSON. The MVP stores these fields in Supabase for program detail pages, semantic search, RAG grounding, and coverage reporting. Neo4j population from PLO/skill data is Phase~2.
 
-    \item \textbf{Embedding generation.} Gemini text-embedding-001 generates embeddings in batches with rate limiting. Chunks from failed OCR pages are excluded.
+    \item \textbf{Embedding generation.} The current POC uses the local multilingual E5 embedding model (\texttt{intfloat/multilingual-e5-base}) to embed chunks before upserting them to Supabase/pgvector. This avoids external embedding quota limits. Chunks from failed OCR pages are excluded.
 
-    \item \textbf{Neo4j population and quality reporting.} Program $\rightarrow$ PLO $\rightarrow$ SkillCluster nodes and edges are created from the structured PLO extraction output. An ingestion report is generated per program flagging documents where OCR ratio exceeds 50\% or PLO extraction returns zero results for manual review.
+    \item \textbf{Target-system graph population and quality reporting.} For Phase~2, Program $\rightarrow$ PLO $\rightarrow$ SkillCluster nodes and edges are created in Neo4j from the structured PLO extraction output. For the MVP, the corresponding quality report focuses on whether curriculum, TCAS, fee, and PLO chunks are retrievable from Supabase/pgvector and whether documents with OCR or extraction failures are flagged for manual review.
 \end{enumerate}
 
 \subsection{Model Design}
@@ -129,13 +155,13 @@ The interest elicitation flow (UC-01) produces the RIASEC vector that seeds both
 
 The primary language model is Gemini 2.5 Flash, selected for its strong Thai language performance, native PDF document understanding, 1M token context window, and cost efficiency relative to GPT-4o. Direct Gemini API calls are used without LangChain or similar orchestration frameworks, to reduce latency and maintain explicit control over prompt structure.
 
-Embeddings use Gemini text-embedding-001, a multilingual model that produces consistent semantic representations for both Thai and English text, enabling cross-language retrieval where a Thai query can retrieve an English document chunk and vice versa.
+Embeddings use the local \texttt{intfloat/multilingual-e5-base} model, with the query/passage prefixes required by the E5 family. This model produces multilingual semantic representations for Thai and English while avoiding Gemini embedding quota limits.
 
-The Neo4j knowledge graph uses a schema with four node types: Faculty, PLO, SkillCluster, and Career. Edges represent: Faculty -[HAS\_PLO]$\rightarrow$ PLO, PLO -[DEVELOPS]$\rightarrow$ SkillCluster, Career -[REQUIRES]$\rightarrow$ SkillCluster. This schema supports the multi-hop queries required for recommendation: given a student's SkillCluster profile, find Faculties whose PLOs develop those clusters.
+The Phase~2 Neo4j knowledge graph uses a schema with four node types: Faculty, PLO, SkillCluster, and Career. Edges represent: Faculty -[HAS\_PLO]$\rightarrow$ PLO, PLO -[DEVELOPS]$\rightarrow$ SkillCluster, Career -[REQUIRES]$\rightarrow$ SkillCluster. This schema supports the multi-hop queries required for the target-system recommendation: given a student's SkillCluster profile, find Faculties whose PLOs develop those clusters.
 
 The interest discovery interface uses a 12-step elicitation flow grounded in Holland's RIASEC model \cite{holland1997}. Steps~1--6 present one RIASEC dimension per screen with 4 Likert statements each (5-point scale, max score 20 per dimension). Step~7 applies a global confidence scalar (1.0 / 0.75 / 0.5) to all dimension scores based on a single self-reported confidence question. Step~8 presents adaptive pairwise forced-choice questions targeting only dimension pairs where the score delta is below a 3-point threshold, with a maximum of 4--6 pairs shown. Steps~9--11 present three scenario questions with A--F role options mapped to RIASEC dimensions, adjusting scores proportionally. Step~12 displays the profile summary with an optional dealbreaker filter that zeros out any explicitly rejected dimensions before L2-normalisation. The full question bank is documented in Appendix~\ref{appendix:A}.
 
-The recommendation ranking blends the RIASEC-derived fit score with a behavioural fit score using a blending weight $\alpha$ that decays automatically as the student accumulates interaction data: new users start at $\alpha = 1.0$ (pure RIASEC); after 3--5 meaningful interactions $\alpha \approx 0.5$ (balanced blend); regular users converge toward $\alpha \approx 0.2$ (behaviour-dominated). Interaction signals are weighted by type: program save (1.0), TCAS guide viewed (0.8), chatbot query about a program (0.6), card expanded (0.4), card viewed (0.1).
+The MVP recommendation ranking uses Pipeline~B2 curriculum-side semantic fit only. The Phase~2 target ranking blends the RIASEC-derived fit score with a behavioural fit score using a blending weight $\alpha$ that decays automatically as the student accumulates interaction data: new users start at $\alpha = 1.0$ (pure RIASEC); after 3--5 meaningful interactions $\alpha \approx 0.5$ (balanced blend); regular users converge toward $\alpha \approx 0.2$ (behaviour-dominated). Interaction signals are weighted by type: program save (1.0), TCAS guide viewed (0.8), chatbot query about a program (0.6), card expanded (0.4), card viewed (0.1).
 
 The baseline for comparison is BM25 keyword retrieval over the same มคอ.2 corpus without embedding or LLM generation. The full RIASEC-to-topic mapping is documented in Appendix~\ref{appendix:A}.
 
@@ -143,9 +169,11 @@ The baseline for comparison is BM25 keyword retrieval over the same มคอ.2 
 \label{subsection:evaluation}
 
 \begin{itemize}[leftmargin=80pt]
-    \item \textbf{RAG pipeline quality:} RAGAS framework metrics \cite{es2023ragas} --- Faithfulness (proportion of claims in the answer supported by retrieved context), Answer Relevancy (semantic similarity between answer and question), Context Recall (proportion of relevant information retrieved). Target: Faithfulness $>$ 0.80, Answer Relevancy $>$ 0.75.
+    \item \textbf{Current POC baseline (May~2026):} The current RAG POC is evaluated with custom LLM-as-judge regression tests tracked in MLflow, including TCAS, fee, alias, bilingual, and missing-data honesty checks. The v8 structured RAG run records 72.7\% good answers on the fee/TCAS regression suite and a 74\% headline retrieval benchmark. This baseline is reported honestly as POC evidence, not as final MVP success.
 
-    \item \textbf{Recommendation quality:} Mean Reciprocal Rank (MRR) and NDCG@5 evaluated on a manually curated test set of 30--50 student interest profiles with ground-truth faculty matches validated by faculty advisors or senior students. Target: MRR $>$ 0.60.
+    \item \textbf{Final MVP RAG quality:} RAGAS framework metrics \cite{es2023ragas} are added as standardized supplementary metrics for UC-04 and UC-08: Faithfulness (proportion of claims in the answer supported by retrieved context), Answer Relevancy (semantic similarity between answer and question), and Context Recall (proportion of relevant information retrieved). Target: Faithfulness $>$ 0.80, Answer Relevancy $>$ 0.75. Custom regression tests remain required for TCAS, fees, aliases, bilingual behaviour, and missing-data honesty because these behaviours are KU-specific.
 
-    \item \textbf{User experience:} Task completion rate and System Usability Scale (SUS) score from user testing with 10--15 high school students or KU first-year students. Target: SUS score $>$ 70 (acceptable).
+    \item \textbf{Recommendation quality:} The MVP does not claim to measure whether a student will remain satisfied with a selected program after four years. That outcome is longitudinal and cannot be observed within the project period. Instead, recommendation quality is evaluated as a short-term relevance and explainability task: given a manually curated set of 30--50 student interest profiles, the system must rank programs judged relevant by faculty advisors, senior students, or documented curriculum evidence. Metrics are Mean Reciprocal Rank (MRR) and NDCG@5, with target MRR $>$ 0.60. Explanations are also checked for faithfulness to the retrieved curriculum evidence. The MVP evaluates the simplified Pipeline~B2 recommender; career-path validation, full hybrid Pipeline~A+B, and Neo4j B1 evaluation are Phase~2.
+
+    \item \textbf{Interest discovery and semantic search usability:} UC-01 completion rate target $>$ 80\%, with System Usability Scale (SUS) score from user testing with 10--15 high school students or KU first-year students. UC-09 is evaluated through semantic query checks and user task completion. Target: SUS score $>$ 70 (acceptable).
 \end{itemize}

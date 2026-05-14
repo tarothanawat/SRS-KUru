@@ -35,11 +35,11 @@ Table~\ref{tab:competitor-comparison} summarises how KUru addresses the gaps ide
 
 \begin{table}[htbp]
 \centering
-\small
+\footnotesize
 \renewcommand{\arraystretch}{1.4}
 \caption{Competitor Comparison Summary}
 \label{tab:competitor-comparison}
-\begin{tabularx}{\textwidth}{|p{2.5cm}|p{1.4cm}|p{1.6cm}|p{2cm}|p{2.4cm}|X|}
+\begin{tabularx}{\textwidth}{|L{2.3cm}|L{1.4cm}|L{1.6cm}|L{1.9cm}|L{2.3cm}|Y|}
 \hline
 \textbf{Feature} & \textbf{KU Website} & \textbf{mytcas .com} & \textbf{ChatGPT/ Gemini} & \textbf{Knowva/ ChulaGENIE} & \textbf{KUru (ours)} \\
 \hline
@@ -47,11 +47,11 @@ KU-specific curriculum data & Partial (PDF) & \xmark & \xmark & \xmark & Full (à
 \hline
 PLO visualization & \xmark & \xmark & \xmark & \xmark & Spider chart \\
 \hline
-Career-to-PLO mapping & \xmark & \xmark & $\sim$ & $\sim$ & Full graph \\
+Career-to-PLO mapping & \xmark & \xmark & $\sim$ & $\sim$ & Phase~2 graph \\
 \hline
 TCAS admission guide & Scattered & Full --- all universities & $\sim$ & \xmark & Structured, KU only \\
 \hline
-Personalization & \xmark & \xmark & Session-only & Basic & Progressive profile \\
+Personalization & \xmark & \xmark & Session-only & Basic & RIASEC profile; progressive Phase~2 \\
 \hline
 Thai language support & \cmark & \cmark & $\sim$ & $\sim$ & \cmark \\
 \hline
@@ -75,7 +75,7 @@ For evaluation, the RAGAS framework \cite{es2023ragas} provides automated metric
 
 Knowledge graph-based recommendation systems have been demonstrated in educational contexts to enable multi-hop reasoning that purely embedding-based approaches cannot support. Embedding-based retrieval can identify semantically similar items but cannot follow explicit typed relationships such as `this PLO develops this skill' or `this career requires this skill level.' The Neo4j graph in KUru encodes these typed relationships explicitly, enabling recommendation paths that are both explainable and traceable to specific curriculum documents \cite{aburasheed2025llmkg, pmc2023kgempowerment}.
 
-Using knowledge graphs as context sources for LLM-generated explanations has been specifically investigated by Abu-Rasheed et al.\ \cite{aburasheed2024kgcontext}, who propose a conversational explainability approach where knowledge graph data is injected into LLM prompts to reduce hallucination risk while maintaining natural dialogue. This is the precise architectural pattern KUru uses for its Program Recommendation Engine: Neo4j provides the structured PLO-to-skill data, and Gemini generates the natural-language explanation from that data rather than from general knowledge.
+Using knowledge graphs as context sources for LLM-generated explanations has been specifically investigated by Abu-Rasheed et al.\ \cite{aburasheed2024kgcontext}, who propose a conversational explainability approach where knowledge graph data is injected into LLM prompts to reduce hallucination risk while maintaining natural dialogue. This is the target-system architectural pattern KUru adopts for Phase~2: Neo4j provides the structured PLO-to-skill data, and Gemini generates the natural-language explanation from that data rather than from general knowledge. The MVP uses retrieved curriculum evidence from Supabase/pgvector as the explanation source.
 
 \subsection{Adaptive Quiz and Interest Profiling}
 \label{subsection:interest-profiling}
@@ -88,13 +88,13 @@ First, the system uses explicit attribute-based elicitation rather than item-bas
 
 Second, the questionnaire is deliberately minimal. Sepliarskaia et al.\ \cite{sepliarskaia2018preference} demonstrated at ACM RecSys that an optimized Static Preference Questionnaire (SPQ) can reduce necessary questionnaire length by up to a factor of three compared to standard elicitation methods, while maintaining or improving recommendation quality. While the SPQ principle advocates for minimalism, KUru's five-step design remains substantially shorter than validated instruments while incorporating adaptive question selection --- targeting only ambiguous RIASEC dimensions rather than administering all questions uniformly --- which preserves the efficiency principle while improving signal quality. KUru's twelve-step adaptive design --- (1) six Likert screens (4 statements per dimension, 5-point scale); (2) one global confidence check; (3) 4--6 adaptive pairwise questions targeting only ambiguous dimension pairs (delta $<$ 3 points); (4) three scenario questions confirming the dominant signal; (5) an optional dealbreaker filter on the profile summary page --- is substantially shorter than a full validated interest inventory while producing a more reliable initial vector than a single tile-selection approach. The pairwise comparison step is adaptive: students with a clearly differentiated profile encounter fewer questions, keeping total completion time within 2--4 minutes.
 
-Third, the system addresses the new user cold-start problem \cite{bobadilla2014coldstart} through this explicit elicitation phase, then transitions to progressive implicit profiling. Behavioral signals including program page visits, chatbot queries, and saved items continuously refine the user's RIASEC vector without additional questioning \cite{kanoje2015user, schilder2023global}. The structured grid interface is supported by de Vries et al.\ \cite{devries2024preference}, who found in a controlled user study that high-guidance elicitation --- presenting structured options rather than open-ended prompts --- produces significantly higher recommendation match scores than low-guidance alternatives.
+Third, the system addresses the new user cold-start problem \cite{bobadilla2014coldstart} through this explicit elicitation phase. Progressive implicit profiling from behavioral signals such as program page visits, chatbot queries, and saved items is retained as Phase~2 \cite{kanoje2015user, schilder2023global}. The structured grid interface is supported by de Vries et al.\ \cite{devries2024preference}, who found in a controlled user study that high-guidance elicitation --- presenting structured options rather than open-ended prompts --- produces significantly higher recommendation match scores than low-guidance alternatives.
 
-It should be noted that interest-based elicitation has inherent limitations as a predictor of long-term academic fit. Meta-analytic research on full validated interest inventories reports approximately 50\% accuracy in predicting eventual career choice even with substantially longer instruments \cite{holland1997}. KUru's abbreviated elicitation is accordingly framed as a starting point for exploration rather than a definitive match, with recommendation confidence increasing as the implicit profiling layer accumulates behavioral signals over subsequent sessions.
+It should be noted that interest-based elicitation has inherent limitations as a predictor of long-term academic fit. Meta-analytic research on full validated interest inventories reports approximately 50\% accuracy in predicting eventual career choice even with substantially longer instruments \cite{holland1997}. KUru's abbreviated elicitation is accordingly framed as a starting point for exploration rather than a definitive match. The evaluated MVP therefore measures short-term relevance and explanation faithfulness, while later confidence improvements from implicit profiling are deferred to Phase~2.
 
 This work applies established cold-start PE methods and the RIASEC vocational framework to academic pathway advising for Thai university applicants --- a novel application context in which the user population (Thai high school students navigating TCAS), the item space (university programs defined by PLOs), and the decision stakes (a multi-year academic commitment) differ substantially from the content recommendation domains in which these methods were originally developed.
 
 \subsection{Hybrid Recommendation Architecture}
 \label{subsection:hybrid-recommendation}
 
-KUru's recommendation pipeline is a hybrid system combining two independent signals: a knowledge-based signal derived from matching the student's RIASEC vector against O*NET occupation profiles (Pipeline~A), and a content-based signal derived from matching against KU program PLO profiles and course content via Neo4j and pgvector semantic search (Pipeline~B). Hybrid recommender systems that combine independent evidence sources consistently outperform single-signal approaches by reducing the error compounding that occurs when one signal feeds sequentially into the next \cite{bobadilla2014coldstart}. In the previous single-chain design, an approximation introduced at the O*NET-to-SkillCluster crosswalk step would propagate through to the final ranking; the parallel architecture eliminates this dependency. The final score weights curriculum-side evidence more heavily ($65\%$) than career-side evidence ($35\%$), reflecting the system's primary purpose: helping students understand what they will actually study at KU, not merely what careers they might eventually pursue.
+KUru's target-system recommendation pipeline is a hybrid system combining two independent signals: a knowledge-based signal derived from matching the student's RIASEC vector against O*NET occupation profiles (Pipeline~A), and a content-based signal derived from matching against KU program PLO profiles and course content via Neo4j and pgvector semantic search (Pipeline~B). Hybrid recommender systems that combine independent evidence sources consistently outperform single-signal approaches by reducing the error compounding that occurs when one signal feeds sequentially into the next \cite{bobadilla2014coldstart}. In the previous single-chain design, an approximation introduced at the O*NET-to-SkillCluster crosswalk step would propagate through to the final ranking; the parallel architecture eliminates this dependency. The MVP uses the curriculum-side semantic component (Pipeline~B2) first, then evaluates the full hybrid architecture in Phase~2.

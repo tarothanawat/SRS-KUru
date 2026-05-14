@@ -1,0 +1,38 @@
+flowchart TD
+    START(["Student completes<br/>RIASEC interest discovery"])
+
+    subgraph PROFILE["1. Build Interest Profile"]
+        VEC["6D RIASEC vector<br/>R, I, A, S, E, C"]
+        TOP["Top dimensions / Holland code<br/>e.g., Investigative + Realistic"]
+        START --> VEC --> TOP
+    end
+
+    subgraph INTENT["2. Convert RIASEC to Curriculum Search Intent"]
+        THEMES["Map top dimensions to interest themes<br/>analysis, problem solving,<br/>systems, technical design,<br/>experiments, hands-on work"]
+        QUERY["Create semantic query<br/>from themes + student answers"]
+        TOP --> THEMES --> QUERY
+    end
+
+    subgraph RETRIEVAL["3. Pipeline B2: Semantic Curriculum Matching"]
+        EMB["Gemini text-embedding-001<br/>embed semantic query"]
+        PGV[("Supabase pgvector<br/>program + PLO + course chunks")]
+        CHUNKS["Retrieve top matching chunks<br/>with program_id and source metadata"]
+        QUERY --> EMB --> PGV --> CHUNKS
+    end
+
+    subgraph SCORING["4. Program Scoring"]
+        GROUP["Group retrieved chunks<br/>by program"]
+        SCORE["Compute curriculum-fit score<br/>top-k similarity average<br/>+ section/source weighting<br/>+ coverage of interest themes"]
+        RANK["Rank programs by score"]
+        CHUNKS --> GROUP --> SCORE --> RANK
+    end
+
+    subgraph EXPLAIN["5. Evidence-Grounded Explanation"]
+        EVIDENCE["Select strongest curriculum evidence<br/>PLOs, course descriptions,<br/>projects, labs, admission info if relevant"]
+        GEMINI["Gemini 2.5 Flash<br/>generate explanation only from evidence"]
+        CARDS["Ranked program cards<br/>with why-this-matches explanation"]
+        RANK --> EVIDENCE --> GEMINI --> CARDS
+    end
+
+    NOTE["MVP evaluation checks short-term relevance:<br/>advisor/senior-student labels, curriculum evidence,<br/>MRR, NDCG@5, explanation faithfulness.<br/>It does not claim 4-year satisfaction."]
+    CARDS --> NOTE

@@ -15,6 +15,8 @@
 \usepackage{cleveref}  % Smarter referencing (must load after amsmath)
 \usepackage{graphicx}  % Allows insertions of graphics
 \usepackage{tabularx}  % Better tabular environment, with dynamic column size support
+\usepackage{array}  % Custom table column types
+\usepackage{ragged2e}  % Better ragged-right text in table cells
 \usepackage{indentfirst}  % Indent first paragraph after headers
 \usepackage{enumitem}  % Better control of itemize, enumerate
 \usepackage{pdflscape}  % Landscape pages for wide figures
@@ -22,6 +24,10 @@
 \usepackage{pifont}   % Dingbat symbols for comparison tables
 \newcommand{\cmark}{\ding{51}}  % ✓
 \newcommand{\xmark}{\ding{55}}  % ✗
+
+\newcolumntype{Y}{>{\RaggedRight\arraybackslash}X}
+\newcolumntype{L}[1]{>{\RaggedRight\arraybackslash}p{#1}}
+\setlength{\tabcolsep}{6pt}
 
 \graphicspath{{./assets/}}
 
@@ -31,8 +37,8 @@
 
 %% -----------------------------------
 % Edit the variables for the paper here!
-\def \srsTitle{KUru: AI-Powered University Program Advisor for KU Program Selection using RAG, Knowledge Graph, and Hybrid Recommendation}
-\def \srsTitleDisplay{KUru: AI-Powered University Program Advisor\\for KU Program Selection using RAG,\\Knowledge Graph, and Hybrid Recommendation}
+\def \srsTitle{KUru: AI-Powered University Program Advisor for KU Program Selection using RAG and Semantic Recommendation}
+\def \srsTitleDisplay{KUru: AI-Powered University Program Advisor\\for KU Program Selection using RAG\\and Semantic Recommendation}
 \def \srsAuthorOne{Thanawat Tantijaroensin 6610545294}
 \def \srsAuthorTwo{Phantawat Luengsiriwattana 6610545871}
 \def \srsAuthorThree{}

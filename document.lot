@@ -1,7 +1,9 @@
 ~\hfill \textbf {Page}\par \addvspace {.2in} \relax \fontsize {14.4}{17}\selectfont \abovedisplayskip 14\p@ plus3\p@ minus7\p@ \abovedisplayshortskip \z@ plus4\p@ \belowdisplayshortskip 7\p@ plus4\p@ minus3\p@ \belowdisplayskip \abovedisplayskip \let \leftmargin \leftmargini \parsep 4\p@ plus2\p@ minus\p@ \topsep 8\p@ plus2\p@ minus4\p@ \itemsep 4\p@ plus2\p@ minus\p@ \leftmargin \leftmargini \parsep 4\p@ plus2\p@ minus\p@ \topsep 8\p@ plus2\p@ minus4\p@ \itemsep 4\p@ plus2\p@ minus\p@ 
-\contentsline {table}{\numberline {1.1}{\ignorespaces Terminology}}{6}{table.1.1}%
-\contentsline {table}{\numberline {2.1}{\ignorespaces Competitor Comparison Summary}}{9}{table.2.1}%
-\contentsline {table}{\numberline {5.1}{\ignorespaces Project Schedule}}{52}{table.5.1}%
-\contentsline {table}{\numberline {A.1}{\ignorespaces Likert Question Bank (4 statements per RIASEC dimension, 5-point scale, max score 20)}}{56}{table.5.1}%
-\contentsline {table}{\numberline {A.2}{\ignorespaces Pairwise Question Bank (6 adjacent dimension pairs)}}{56}{table.5.2}%
-\contentsline {table}{\numberline {A.3}{\ignorespaces Scenario Question Bank (3 scenarios × 6 role options with RIASEC mapping)}}{57}{table.5.3}%
+\contentsline {table}{\numberline {1.1}{\ignorespaces MVP Scope Boundary}}{4}{table.1.1}%
+\contentsline {table}{\numberline {1.2}{\ignorespaces Terminology}}{9}{table.1.2}%
+\contentsline {table}{\numberline {2.1}{\ignorespaces Competitor Comparison Summary}}{12}{table.2.1}%
+\contentsline {table}{\numberline {3.1}{\ignorespaces Use Case MVP Status}}{18}{table.3.1}%
+\contentsline {table}{\numberline {5.1}{\ignorespaces Project Schedule}}{57}{table.5.1}%
+\contentsline {table}{\numberline {A.1}{\ignorespaces Likert Question Bank (4 statements per RIASEC dimension, 5-point scale, max score 20)}}{63}{table.5.1}%
+\contentsline {table}{\numberline {A.2}{\ignorespaces Pairwise Question Bank (6 adjacent dimension pairs)}}{63}{table.5.2}%
+\contentsline {table}{\numberline {A.3}{\ignorespaces Scenario Question Bank (3 scenarios × 6 role options with RIASEC mapping)}}{64}{table.5.3}%

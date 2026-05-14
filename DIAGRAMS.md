@@ -19,17 +19,19 @@ flowchart TD
         direction TB
         API["FastAPI"]
         RAG["RAG Engine"]
-        REC["Recommendation Engine<br/>Pipeline A + Pipeline B"]
+        REC["MVP Recommendation Engine<br/>Pipeline B2 semantic curriculum matching"]
+        FUTURE_REC["Phase 2 Recommender<br/>Pipeline A + Neo4j B1 + behavioural re-ranking"]
         ING["Data Ingestion Pipeline"]
         API --> RAG
         API --> REC
+        API -.-> FUTURE_REC
         API --> ING
     end
 
     subgraph DATA["Data Layer"]
         direction LR
         SUP[("Supabase<br/>PostgreSQL · pgvector · Auth")]
-        NEO[("Neo4j<br/>Knowledge Graph")]
+        NEO[("Neo4j<br/>Knowledge Graph<br/>(Phase 2)")]
     end
 
     subgraph AI_LAYER["AI — Google"]
@@ -41,7 +43,7 @@ flowchart TD
     subgraph SOURCES["External Data Sources"]
         direction LR
         PDF["มคอ.2 PDFs<br/>KU Faculty"]
-        ONET["O*NET Dataset<br/>US Dept. of Labor"]
+        ONET["O*NET Dataset<br/>US Dept. of Labor<br/>(Phase 2)"]
         TCAS["TCAS Admission Data<br/>KU Faculty"]
     end
 
@@ -53,14 +55,16 @@ flowchart TD
     RAG --> EMB
 
     REC --> SUP
-    REC --> NEO
     REC --> GEN
+    FUTURE_REC -.-> SUP
+    FUTURE_REC -.-> NEO
+    FUTURE_REC -.-> GEN
 
     ING --> PDF
-    ING --> ONET
+    ING -.-> ONET
     ING --> TCAS
     ING -->|"embeddings + structured data"| SUP
-    ING -->|"PLO · Skill · Career graph"| NEO
+    ING -.->|"PLO · Skill · Career graph"| NEO
 ```
 
 ---
@@ -80,18 +84,18 @@ flowchart LR
         UC03["UC-03<br/>Explore PLO Spider Chart"]
         UC04["UC-04<br/>Query Curriculum Chatbot"]
         UC05["UC-05<br/>View TCAS Admission Guide"]
-        UC06["UC-06<br/>Explore Career Paths"]
+        UC06["UC-06<br/>Explore Career Paths<br/>(Phase 2)"]
         UC08["UC-08<br/>Explain Why Recommended"]
         UC09["UC-09<br/>Search Programs Semantically"]
-        UC10["UC-10<br/>Pin Programs & Compare"]
-        UC11["UC-11<br/>View Curriculum Timeline"]
-        UC12["UC-12<br/>Portfolio Readiness Check"]
+        UC10["UC-10<br/>Pin Programs & Compare<br/>(Phase 2)"]
+        UC11["UC-11<br/>View Curriculum Timeline<br/>(Phase 2)"]
+        UC12["UC-12<br/>Portfolio Readiness Check<br/>(Phase 2)"]
     end
 
     subgraph REG_UC["Registered users only"]
-        UC07["UC-07<br/>Refine Profile via Implicit Signals"]
-        DASH["Save Profile & Bookmark Programs"]
-        TRACK["Track TCAS Deadlines"]
+        UC07["UC-07<br/>Refine Profile via Implicit Signals<br/>(Phase 2)"]
+        DASH["Save Profile & Bookmark Programs<br/>(Phase 2)"]
+        TRACK["Track TCAS Deadlines<br/>(Phase 2)"]
         RESET["Reset Interest Profile"]
     end
 
@@ -115,17 +119,63 @@ flowchart LR
 
     UC01 -->|"produces RIASEC vector"| UC02
     UC02 -->|"select program"| UC03
-    UC02 -->|"tap career"| UC06
+    UC02 -.->|"Phase 2 career link"| UC06
     UC02 -->|"tap why?"| UC08
-    UC10 -->|"batch check"| UC12
+    UC10 -.->|"Phase 2 batch check"| UC12
 ```
 
 ---
 
-## Figure 3 — Recommendation Pipeline (`fig:recommendation-pipeline`)
+## Figure 3A — MVP Recommendation Pipeline (`fig:mvp-recommendation-pipeline`)
 
-> Five-stage pipeline with two parallel signals. Corresponds to §4.2.2.
-> (No current placeholder in the LaTeX — consider adding one to §4.2.2.)
+> Evaluated MVP flow. RIASEC is converted into curriculum search intent, then matched against indexed program/PLO/course chunks. This should replace the old recommendation diagram as the primary diagram in §4.2.2.
+
+```mermaid
+flowchart TD
+    START(["Student completes<br/>RIASEC interest discovery"])
+
+    subgraph PROFILE["1. Build Interest Profile"]
+        VEC["6D RIASEC vector<br/>R, I, A, S, E, C"]
+        TOP["Top dimensions / Holland code<br/>e.g., Investigative + Realistic"]
+        START --> VEC --> TOP
+    end
+
+    subgraph INTENT["2. Convert RIASEC to Curriculum Search Intent"]
+        THEMES["Map top dimensions to interest themes<br/>analysis, problem solving,<br/>systems, technical design,<br/>experiments, hands-on work"]
+        QUERY["Create semantic query<br/>from themes + student answers"]
+        TOP --> THEMES --> QUERY
+    end
+
+    subgraph RETRIEVAL["3. Pipeline B2: Semantic Curriculum Matching"]
+        EMB["Gemini text-embedding-001<br/>embed semantic query"]
+        PGV[("Supabase pgvector<br/>program + PLO + course chunks")]
+        CHUNKS["Retrieve top matching chunks<br/>with program_id and source metadata"]
+        QUERY --> EMB --> PGV --> CHUNKS
+    end
+
+    subgraph SCORING["4. Program Scoring"]
+        GROUP["Group retrieved chunks<br/>by program"]
+        SCORE["Compute curriculum-fit score<br/>top-k similarity average<br/>+ section/source weighting<br/>+ coverage of interest themes"]
+        RANK["Rank programs by score"]
+        CHUNKS --> GROUP --> SCORE --> RANK
+    end
+
+    subgraph EXPLAIN["5. Evidence-Grounded Explanation"]
+        EVIDENCE["Select strongest curriculum evidence<br/>PLOs, course descriptions,<br/>projects, labs, admission info if relevant"]
+        GEMINI["Gemini 2.5 Flash<br/>generate explanation only from evidence"]
+        CARDS["Ranked program cards<br/>with why-this-matches explanation"]
+        RANK --> EVIDENCE --> GEMINI --> CARDS
+    end
+
+    NOTE["MVP evaluation checks short-term relevance:<br/>advisor/senior-student labels, curriculum evidence,<br/>MRR, NDCG@5, explanation faithfulness.<br/>It does not claim 4-year satisfaction."]
+    CARDS --> NOTE
+```
+
+---
+
+## Figure 3B — Phase 2 Target-System Recommendation Pipeline (`fig:recommendation-pipeline`)
+
+> Five-stage pipeline with two parallel signals. This is the Phase~2 target-system design, not the evaluated MVP flow.
 
 ```mermaid
 flowchart TD
@@ -264,7 +314,7 @@ flowchart TD
     end
 
     NORM["L2-normalise 6-dimensional vector"]
-    OUTPUT(["RIASEC vector output<br/>→ Feed to Pipeline A + Pipeline B"])
+    OUTPUT(["RIASEC vector output<br/>MVP → Pipeline B2 semantic curriculum matching<br/>Phase 2 → Pipeline A + Neo4j B1"])
 
     START --> LIKERT
     LIKERT --> CONFIDENCE

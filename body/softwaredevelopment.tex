@@ -22,9 +22,9 @@
 %% 
 %%     \item \textbf{Graph database:} Neo4j on Railway. Stores the PLO--Skill--Career knowledge graph. Queried via Cypher from the FastAPI backend.
 %% 
-%%     \item \textbf{AI:} Gemini 2.5 Flash (generation), Gemini text-embedding-001 (embeddings), accessed via Google AI SDK for Python.
+%%     \item \textbf{AI:} Gemini 2.5 Flash Lite via OpenRouter for generation, local multilingual-E5 for embeddings, Gemini text mode for structured extraction.
 %% 
-%%     \item \textbf{Data processing:} PyMuPDF (born-digital PDF extraction), Typhoon OCR v1.5 via opentyphoon.ai API (primary OCR fallback for scanned Thai documents --- purpose-built Thai/English bilingual OCR, outperforms GPT-4o and Gemini on Thai government document formats, free API), Gemini Vision (secondary OCR fallback when Typhoon OCR API is unavailable), custom Python chunking pipeline.
+%%     \item \textbf{Data processing:} PyMuPDF for page text extraction, Typhoon OCR via opentyphoon.ai for low-yield pages, isolated full scanned-PDF OCR through the configured OCR model when needed, local multilingual-E5 embeddings, Gemini text-mode structured extraction, and custom Python chunking.
 %% 
 %%     \item \textbf{Thai NLP:} PyThaiNLP --- Thai text normalization used in TCAS program name entity resolution (fuzzy matching with sequence similarity scoring).
 %% 
@@ -47,7 +47,7 @@
 \section{Schedule}
 \label{section:schedule}
 
-Development is organized into four phases across April~2026 and January~March~2027. P1~Foundation runs April~1--12, P2~Core~AI runs April~6--30, P3~Features runs January~2027, and P4~Polish \& Evaluation runs February--March~2027. By the end of April 2026, core AI features (RAG chatbot and recommendation engine) will be completed as a proof of concept.
+Development is organized into four phases across April~2026 and January--March~2027. P1~Foundation runs April~1--12, P2~Core~AI POC runs April~6--30, P3~MVP Feature Completion runs January~2027, and P4~Polish \& Evaluation runs February--March~2027. By the end of April~2026, the current proof of concept demonstrates the data ingestion pipeline, grounded RAG chatbot, and Program Explorer over indexed curriculum content. Recommendation, explanation, and PLO/profile visualisation remain MVP features to be completed and evaluated during P3--P4.
 
 \begin{table}[htbp]
 \centering
@@ -55,7 +55,7 @@ Development is organized into four phases across April~2026 and January~March~20
 \renewcommand{\arraystretch}{1.4}
 \caption{Project Schedule}
 \label{tab:schedule}
-\begin{tabularx}{\textwidth}{|p{3.2cm}|p{2.8cm}|X|}
+\begin{tabularx}{\textwidth}{|L{3cm}|L{3.2cm}|Y|}
 \hline
 \textbf{Period} & \textbf{Phase} & \textbf{Deliverables} \\
 \hline
@@ -63,27 +63,27 @@ Apr 1--5, 2026 & P1 · Foundation — Set up Repo & Repository setup, project st
 \hline
 Apr 1--5, 2026 & P1 · Foundation — Data Collection & Receive มคอ.2 and TCAS admission data from KU faculty, download O*NET dataset \\
 \hline
-Apr 6--12, 2026 & P1 · Foundation — Data Ingestion & PDF extraction, chunking, embedding into Supabase pgvector; Neo4j schema + pilot data \\
+Apr 6--12, 2026 & P1 · Foundation — Data Ingestion & PDF extraction, chunking, embedding into Supabase pgvector; graph schema exploration for Phase~2 \\
 \hline
-Apr 6--30, 2026 & P2 · Core AI — RAG Chatbot PoC & RAG pipeline (retrieval + Gemini generation), TCAS Q\&A support \\
+Apr 6--30, 2026 & P2 · Core AI POC — RAG Chatbot & RAG pipeline over indexed curriculum and TCAS/fee data, grounded answer generation, source citations \\
 \hline
-Apr 6--30, 2026 & P2 · Core AI — RIASEC Recommendation PoC & Recommendation engine (Pipeline A + B, interest elicitation) \\
+Apr 6--30, 2026 & P2 · Core AI POC — Program Explorer & Semantic search and browsing over indexed program content and metadata using Supabase/pgvector \\
 \hline
-Apr 6--30, 2026 & P2 · Core AI — Basic Integration \& First Demo & End-to-end integration of RAG + Recommendation, first working demo \\
+Apr 6--30, 2026 & P2 · Core AI POC — Demo Integration & Working proof-of-concept demo combining ingestion output, Program Explorer, and RAG chatbot \\
 \hline
-Jan 1--31, 2027 & P3 · Features — Program Explorer & PLO Explorer with semantic search and pin tray \\
+Jan 1--31, 2027 & P3 · MVP Features — Interest Discovery & RIASEC elicitation flow, profile scoring, confidence adjustment, and profile summary \\
 \hline
-Jan 1--31, 2027 & P3 · Features — Program Detail Pages & Full program detail pages, curriculum timeline visualiser, PLO spider chart \\
+Jan 1--31, 2027 & P3 · MVP Features — Program Detail Pages & Program detail pages, static PLO/profile chart, and available TCAS information \\
 \hline
-Jan 1--31, 2027 & P3 · Features — Portfolio Coach & Portfolio readiness checker (top 10 programs) \\
+Jan 1--31, 2027 & P3 · Phase~2 Prototype — Portfolio Coach & Optional prototype UI only; excluded from MVP pass/fail evaluation \\
 \hline
-Jan 31, 2027 & P3 · Features — Complete Recommendation & Complete recommendation feature integration \\
+Jan 31, 2027 & P3 · MVP Features — Complete Recommendation & Complete simplified Pipeline~B2 recommendation, evidence-grounded explanation, and Program Explorer refinement \\
 \hline
 Feb 1--28, 2027 & P4 · Polish \& Eval — UI/UX Polish & UI/UX polish, Thai/English language switching, mobile-first refinement \\
 \hline
-Feb 1--28, 2027 & P4 · Polish \& Eval — Cross-feature Integration & Chatbot + Explorer + Portfolio connection \\
+Feb 1--28, 2027 & P4 · Polish \& Eval — Cross-feature Integration & Chatbot + Explorer + Recommendation + Program Detail integration \\
 \hline
-Feb 1--28, 2027 & P4 · Polish \& Eval — User Testing & RAGAS evaluation, MRR/NDCG test set, SUS user testing with 10--15 students \\
+Feb 1--28, 2027 & P4 · Polish \& Eval — User Testing & RAGAS plus custom TCAS/fee regression, MRR/NDCG test set, SUS user testing with 10--15 students \\
 \hline
 Mar 1--31, 2027 & P4 · Polish \& Eval — Performance Testing & Performance benchmarking against all success metric targets \\
 \hline

@@ -13,44 +13,82 @@ Prospective students who are interested in KU programs --- whether finishing hig
 \section{Problem Statement}
 \label{section:problem-statement}
 
-High school students selecting KU programs for TCAS lack personalized, grounded guidance that connects their interests to specific program PLOs, career outcomes, and admission requirements. Existing tools are either generic (general-purpose LLMs with no KU-specific data) or static (official faculty web pages with no personalization or synthesis).
+High school students selecting KU programs for TCAS lack personalized, grounded guidance that connects their interests to specific program learning outcomes, curriculum content, and admission requirements. Existing tools are either generic (general-purpose LLMs with no KU-specific data) or static (official faculty web pages with no personalization or synthesis).
 
 The consequence is suboptimal faculty selection, contributing to higher rates of program dissatisfaction, transfer requests, and dropout.
 
 \section{Solution Overview}
 \label{section:solution-overview}
 
-KUru is a bilingual (Thai and English) web application that serves as an intelligent advisor for students who are exploring career paths or programs at Kasetsart University. The system is grounded in official KU curriculum documents provided by faculty, making its guidance specific, accurate, and authoritative rather than approximate.
+KUru is a bilingual (Thai and English) web application that serves as an intelligent advisor for students who are exploring programs at Kasetsart University. The system is grounded in official KU curriculum documents provided by faculty, making its guidance specific, accurate, and authoritative rather than approximate.
 
-The system conducts adaptive interest discovery, produces ranked program recommendations with PLO visualizations, provides career path detail for matched programs, and presents a structured TCAS admission guide specific to each faculty and round.
+The target system conducts adaptive interest discovery, produces ranked program recommendations with PLO visualizations, and presents structured TCAS admission information for matched programs. The current proof of concept is narrower: it demonstrates data ingestion, the grounded RAG chatbot, and the Program Explorer.
 
 The system focuses exclusively on students at the pre-admission stage --- before any enrollment decision is made.
 
-The core AI architecture combines a RAG pipeline over มคอ.2 curriculum documents with a Neo4j knowledge graph connecting faculties, PLOs, skills, and careers. All recommendations are grounded in retrieved curriculum content, not generated from model weights alone.
+The long-term KUru architecture combines a RAG pipeline over มคอ.2 curriculum documents with structured recommendation, curriculum, admission, and future graph-based reasoning components. For the evaluated MVP, the system is intentionally narrower: it proves grounded curriculum and TCAS question answering, RIASEC-based interest discovery, semantic program search, simplified program recommendation, static PLO visualisation, and recommendation explanation. More advanced graph-based, behavioural, comparison, career, portfolio, and timeline features are retained as Phase~2 target-system capabilities.
+
+\section{Revision Based on Proposal Feedback}
+\label{section:proposal-feedback-revision}
+
+The proposal committee's main concern was recommendation evaluation: whether a student truly ``liked'' or benefited from a program can only be known after years of study, so long-term satisfaction is not a feasible MVP ground truth. This revised SRS addresses that concern by removing career-path validation from the evaluated MVP and replacing it with short-term, inspectable proxy evaluation. The MVP recommendation is evaluated by whether ranked programs are relevant to a student's stated interests and retrieved curriculum evidence, using a curated profile test set, advisor/senior-student relevance labels, MRR/NDCG@5, explanation faithfulness, and user task feedback. Career Explorer, O*NET matching, Neo4j graph reasoning, and behavioural re-ranking are retained only as Phase~2 target-system features.
+
+Other proposal feedback is addressed through three additional changes. First, the MVP scope is reduced from the original full-product vision to the evaluated features that can be implemented and tested reliably. Second, the recommendation architecture is split into an MVP implementation using Pipeline~B2 semantic curriculum matching and a Phase~2 target architecture. Third, RAG evaluation is clarified by separating the May~2026 POC custom LLM-as-judge regression tests from the final MVP RAGAS targets, while the current POC status is documented explicitly as completed technical evidence rather than final MVP success.
+
+\section{MVP Scope Boundary}
+\label{section:mvp-scope-boundary}
+
+The original KUru product vision includes a broad AI pathway navigator. The evaluated MVP narrows that vision into a smaller system that can be implemented and measured reliably within the project period. Table~\ref{tab:mvp-scope-boundary} defines the source of truth for MVP scope used throughout this SRS.
+
+\begin{table}[htbp]
+\centering
+\small
+\renewcommand{\arraystretch}{1.55}
+\caption{MVP Scope Boundary}
+\label{tab:mvp-scope-boundary}
+\begin{tabularx}{\textwidth}{|L{2.6cm}|Y|Y|}
+\hline
+\textbf{Status} & \textbf{Use Cases / Features} & \textbf{MVP Interpretation} \\
+\hline
+In scope & UC-01 Interest Discovery; UC-02 Program Recommendation; UC-04 KUru Advisor; UC-08 Recommendation Explanation; UC-09 Semantic Program Search & Core evaluated MVP capabilities. Recommendation is simplified to curriculum-side semantic matching using Pipeline~B2 rather than the full hybrid target architecture. \\
+\hline
+Partial scope & UC-03 PLO Chart; UC-05 TCAS Admission Guide & Implemented as static PLO/profile visualisation and TCAS information on program detail pages and chatbot answers. A full interactive PLO overlay and standalone TCAS guide are Phase~2. \\
+\hline
+Phase~2 / target system & UC-06 Career Explorer; UC-07 Behavioural Blending; UC-10 Program Comparison; UC-11 Curriculum Timeline Visualiser; UC-12 Portfolio Readiness Checker; Neo4j Pipeline~B1 & Preserved in the product vision but excluded from MVP pass/fail evaluation. Prototype UI may exist, but these are not grading targets for the evaluated MVP. \\
+\hline
+\end{tabularx}
+\end{table}
+
+\section{Current POC Baseline}
+\label{section:current-poc-baseline}
+
+As of May~2026, the current proof of concept demonstrates the technical baseline for the MVP rather than the complete target system. The POC includes a cleaned Bangkhen-focused corpus of 57 programs and 13,910 indexed chunks, the data ingestion pipeline, a structured v8 RAG pipeline selected for TCAS and fee grounding, source-cited chatbot responses, a Program Explorer over indexed curriculum content, frontend/backend integration, and MLflow-backed evaluation runs including \texttt{v8\_structured\_tcas\_fees}. The POC also records a 72.7\% good-answer rate on the fee/TCAS regression suite and a 74\% headline retrieval benchmark. Interest discovery, recommendation, recommendation explanation, and PLO/profile visualisation remain final MVP work to be completed and evaluated against the MVP evaluation plan.
 
 \subsection{Features}
 \label{subsection:features}
 
+\noindent The list below preserves the broader target-system feature set while labelling each item by its evaluated MVP status.
+
 \begin{enumerate}[leftmargin=80pt]
-    \item \textbf{Interest Discovery:} A twelve-step adaptive interest elicitation interface grounded in Holland's RIASEC vocational model \cite{holland1997}: (1) six sequential Likert rating screens, one per RIASEC dimension (R/I/A/S/E/C), each presenting 4 Thai-language statements rated on a 5-point scale (1~=~ไม่เห็นด้วยอย่างมาก, 5~=~เห็นด้วยอย่างมาก) --- raw scores per dimension are summed (max 20); (2) one global confidence check screen applying a scalar (1.0 / 0.75 / 0.5) to all six dimension scores; (3) 4--6 adaptive pairwise forced-choice questions targeting only dimension pairs where $|\text{score}_A - \text{score}_B| < 3$ after confidence scaling; (4--6) 3 scenario questions with A--F role options mapped to RIASEC dimensions, adjusting scores proportionally; and (7) a profile summary page with an optional dealbreaker filter zeroing out explicitly rejected dimensions before L2-normalisation. Total elicitation time is 2--4 minutes. As the student accumulates interaction data, a blending weight $\alpha$ shifts the system progressively from RIASEC-based to behavioural-signal-based recommendations.
+    \item \textbf{Interest Discovery (MVP):} A twelve-step adaptive interest elicitation interface grounded in Holland's RIASEC vocational model \cite{holland1997}: (1) six sequential Likert rating screens, one per RIASEC dimension (R/I/A/S/E/C), each presenting 4 Thai-language statements rated on a 5-point scale (1~=~ไม่เห็นด้วยอย่างมาก, 5~=~เห็นด้วยอย่างมาก) --- raw scores per dimension are summed (max 20); (2) one global confidence check screen applying a scalar (1.0 / 0.75 / 0.5) to all six dimension scores; (3) 4--6 adaptive pairwise forced-choice questions targeting only dimension pairs where $|\text{score}_A - \text{score}_B| < 3$ after confidence scaling; (4--6) 3 scenario questions with A--F role options mapped to RIASEC dimensions, adjusting scores proportionally; and (7) a profile summary page with an optional dealbreaker filter zeroing out explicitly rejected dimensions before L2-normalisation. Total elicitation time is 2--4 minutes. Behavioural refinement is deferred to Phase~2.
 
-    \item \textbf{Program Recommendation Engine:} Ranked list of KU programs matched to the student's RIASEC interest profile using a hybrid recommendation architecture combining two independent signals: a career-side signal (Pipeline~A) matching the student's RIASEC vector against O*NET occupation data via pgvector, and a curriculum-side signal (Pipeline~B) matching against KU program PLO profiles via Neo4j and course content via pgvector semantic search. Final score $= 0.35 \times \text{A-score} + 0.65 \times \text{B-score}$. Recommendations are explained in plain language covering the full chain from interests to career alignment to curriculum fit. Covers all KU programs for which มคอ.2 documents are available.
+    \item \textbf{Program Recommendation Engine (MVP simplified):} Ranked list of KU programs matched to the student's RIASEC interest profile. The evaluated MVP uses curriculum-side semantic matching over indexed program and course content (Pipeline~B2 only). The target-system architecture combines a career-side signal (Pipeline~A), Neo4j PLO matching (Pipeline~B1), and course-content semantic search (Pipeline~B2), with final score $= 0.35 \times \text{A-score} + 0.65 \times \text{B-score}$. The full hybrid architecture is deferred to Phase~2.
 
-    \item \textbf{PLO Spider Chart Visualizer:} Interactive radar chart showing the skill profile a student will develop in any given program, overlaid with the student's interest profile for visual fit assessment.
+    \item \textbf{PLO Spider Chart Visualizer (Partial MVP):} Static chart showing the skill profile a student will develop in any given program. Interactive overlay with the student's interest profile is a Phase~2 enhancement.
 
-    \item \textbf{KUru Advisor:} RAG-powered Q\&A interface over มคอ.2 documents supporting natural language queries in Thai and English about any KU program.
+    \item \textbf{KUru Advisor (MVP):} RAG-powered Q\&A interface over indexed curriculum, TCAS, and fee-related documents supporting natural language queries in Thai and English, with source citations and explicit missing-data fallback behaviour.
 
-    \item \textbf{TCAS Admission Guide:} Structured per-faculty, per-round admission information including GPAX requirements, exam score criteria (TGAT/TPAT/A-Level), portfolio requirements, and deadlines.
+    \item \textbf{TCAS Admission Guide (Partial MVP):} Program detail pages and chatbot answers expose available TCAS information including GPAX requirements, exam score criteria (TGAT/TPAT/A-Level), portfolio requirements, fees, and deadlines. A standalone TCAS guide is Phase~2.
 
-    \item \textbf{Saved Profile Dashboard:} Optional login to persist interest profile, bookmarked programs, and TCAS deadline tracking across sessions.
+    \item \textbf{Saved Profile Dashboard (Phase~2):} Optional login to persist interest profile, bookmarked programs, and TCAS deadline tracking across sessions.
 
-    \item \textbf{PLO Explorer with Semantic Search:} A browsable and searchable directory of all KU programs. Students can search using natural language queries in Thai or English (e.g., ``หลักสูตรที่เรียน AI เน้นโปรเจกต์ รับ TGAT ต่ำ''). Queries are parsed into structured constraints covering topic areas, teaching methods, and TCAS requirements, then matched against program content via multi-source parallel query against Neo4j, Supabase TCAS data, and pgvector. Students can pin up to 4 programs to a persistent comparison tray for side-by-side comparison, batch portfolio checking, and chatbot queries with multi-program context.
+    \item \textbf{PLO Explorer with Semantic Search (MVP):} A browsable and searchable directory of indexed KU programs. Students can search using natural language queries in Thai or English (e.g., ``หลักสูตรที่เรียน AI เน้นโปรเจกต์ รับ TGAT ต่ำ''). The MVP matches against program content via Supabase/pgvector and available metadata. Multi-source Neo4j search, pin-tray comparison, and batch portfolio checking are Phase~2.
 
-    \item \textbf{Portfolio Readiness Checker:} Students upload a portfolio PDF; Gemini extracts a structured portfolio profile (activities, certificates, academic records, personal statement). The system compares this against pre-extracted faculty criteria schemas for selected programs and performs a four-part gap analysis: hard threshold eligibility check, required item coverage, preferred item strength assessment, and qualitative criteria assessment. Output is a structured report with eligibility status, portfolio strength profile, prioritised gap list, and deadline-aware action recommendations. MVP scope: top 10 programs. Excludes programs requiring creative work evaluation.
+    \item \textbf{Portfolio Readiness Checker (Phase~2):} Students upload a portfolio PDF; Gemini extracts a structured portfolio profile (activities, certificates, academic records, personal statement). The system compares this against pre-extracted faculty criteria schemas for selected programs and performs a four-part gap analysis. Prototype UI may exist, but this feature is excluded from MVP pass/fail evaluation.
 
-    \item \textbf{Curriculum Timeline Visualiser:} For any KU program, displays a visual map of what the student will study across 4 years. Course composition, teaching method breakdown (lecture/lab/project ratios), and time commitment per year are extracted from มคอ.2 course structure data during ingestion. Gemini synthesises this structured data into natural-language year narratives on demand. This is structured extraction followed by grounded generation --- not open-ended RAG.
+    \item \textbf{Curriculum Timeline Visualiser (Phase~2):} For any KU program, displays a visual map of what the student will study across 4 years. Course composition, teaching method breakdown (lecture/lab/project ratios), and time commitment per year are extracted from มคอ.2 course structure data during ingestion.
 
-    \item \textbf{Program Comparison:} Students can pin up to 4 programs from the explorer or recommendation screen and compare them side-by-side, showing: overlaid PLO radar charts, career path overlap, curriculum character profile across 5 dimensions (theory vs.\ project, individual vs.\ team, lab vs.\ lecture, early specialisation vs.\ broad foundation, industry connection vs.\ academic focus), TCAS accessibility per round, and personalised fit scores relative to the student's RIASEC profile.
+    \item \textbf{Program Comparison (Phase~2):} Students can pin up to 4 programs from the explorer or recommendation screen and compare them side-by-side, showing: overlaid PLO radar charts, career path overlap, curriculum character profile across 5 dimensions, TCAS accessibility per round, and personalised fit scores relative to the student's RIASEC profile.
 \end{enumerate}
 
 \section{Target Users}
@@ -59,10 +97,10 @@ The core AI architecture combines a RAG pipeline over มคอ.2 curriculum doc
 KUru serves prospective students at the pre-admission stage:
 
 \begin{itemize}[leftmargin=80pt]
-    \item \textbf{Prospective KU applicants (pre-admission):} Anyone considering KU programs before making an enrollment decision. This includes high school students in Mathayom 4--6 preparing for TCAS, gap-year students reconsidering their options, and anyone exploring what KU programs offer and what careers they lead to. No prior KU enrollment is assumed. Guidance spans from initial interest discovery through to understanding specific TCAS admission requirements.
+    \item \textbf{Prospective KU applicants (pre-admission):} Anyone considering KU programs before making an enrollment decision. This includes high school students in Mathayom 4--6 preparing for TCAS, gap-year students reconsidering their options, and anyone exploring what KU programs offer through curriculum, PLO, and admission evidence. No prior KU enrollment is assumed. Guidance spans from initial interest discovery through to understanding specific TCAS admission requirements. Career-path exploration is retained as a Phase~2 target-system capability.
 \end{itemize}
 
-Users may access the system without an account. Login unlocks profile persistence, saved programs, and deadline notifications.
+Users may access the MVP without an account. Login-based profile persistence, saved programs, and deadline notifications are Phase~2 enhancements unless time remains after MVP evaluation.
 
 \section{Terminology}
 \label{section:terminology}
@@ -72,7 +110,7 @@ Users may access the system without an account. Login unlocks profile persistenc
 \small
 \renewcommand{\arraystretch}{1.4}
 \caption{Terminology}
-\begin{tabularx}{\textwidth}{|p{3cm}|X|}
+\begin{tabularx}{\textwidth}{|L{3cm}|Y|}
 \hline
 \textbf{Term} & \textbf{Definition} \\
 \hline
@@ -92,7 +130,7 @@ RAG & Retrieval-Augmented Generation --- an AI architecture that retrieves relev
 \hline
 Knowledge Graph & A graph database structure in which nodes represent entities (faculties, PLOs, skills, careers) and edges represent relationships between them (a faculty produces certain PLOs, a PLO develops certain skills, a career requires certain skills). \\
 \hline
-O*NET & The Occupational Information Network --- a US Department of Labor database cataloguing approximately 900 occupations with structured skill requirements. Used as the career-to-skill data layer. \\
+O*NET & The Occupational Information Network --- a US Department of Labor database cataloguing approximately 900 occupations with structured skill requirements. Used in the Phase~2 career-to-skill data layer. \\
 \hline
 RIASEC & Holland's six vocational personality types: Realistic, Investigative, Artistic, Social, Enterprising, Conventional. Used as the theoretical framework for interest elicitation and as the native classification system of the O*NET occupational database. \\
 \hline
