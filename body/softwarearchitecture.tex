@@ -40,7 +40,7 @@ Figure~\ref{fig:domain-model} shows the target-system domain model: the eleven c
 \subsection{RAG Pipeline Sequence}
 \label{subsection:rag-pipeline}
 
-When a user submits a query to the curriculum chatbot: (1) the query is embedded locally using \texttt{intfloat/multilingual-e5-base}; (2) the embedding is used to perform a cosine similarity search against the pgvector store of มคอ.2 document chunks; (3) the top-$k$ retrieved chunks are assembled into a prompt context along with the user query and the conversation history; (4) Gemini 2.5 Flash Lite via OpenRouter generates a grounded response in the requested language; (5) source citations are appended to the response.
+When a user submits a query to the curriculum chatbot: (1) the query is embedded locally using \texttt{intfloat/multilingual-e5-base}; (2) the embedding is used to perform a cosine similarity search against the pgvector store of มคอ.2 document chunks; (3) the top-$k$ retrieved chunks are assembled into a prompt context along with the user query and the conversation history; (4) Gemini 2.5 Flash Lite via OpenRouter generates a grounded response in the requested language; (5) source citations are appended to the response. In the current POC, citation chips expose provenance such as source file, section type, and similarity/confidence context, but they do not yet open the exact PDF page or extracted chunk. Deep source inspection is Phase~2; the future API should include \texttt{chunk\_id}, page number, and source URL so the frontend can open a source preview panel or PDF page.
 
 \begin{figure}[p]
     \centering
@@ -153,7 +153,7 @@ The interest elicitation flow (UC-01) produces the RIASEC vector that seeds the 
 \subsection{Model Design}
 \label{subsection:model-design}
 
-The primary language model is Gemini 2.5 Flash, selected for its strong Thai language performance, native PDF document understanding, 1M token context window, and cost efficiency relative to GPT-4o. Direct Gemini API calls are used without LangChain or similar orchestration frameworks, to reduce latency and maintain explicit control over prompt structure.
+The primary answer-generation model for the MVP RAG path is Gemini 2.5 Flash Lite via OpenRouter, selected for Thai/English response quality and cost efficiency. Direct Gemini text-mode calls are used for structured extraction where appropriate, and direct Gemini vision OCR is used only in the isolated full scanned-PDF OCR path when configured. The project avoids LangChain or similar orchestration frameworks to reduce latency and maintain explicit control over prompt structure.
 
 Embeddings use the local \texttt{intfloat/multilingual-e5-base} model, with the query/passage prefixes required by the E5 family. This model produces multilingual semantic representations for Thai and English while avoiding Gemini embedding quota limits.
 
@@ -163,13 +163,13 @@ The interest discovery interface uses a 12-step elicitation flow grounded in Hol
 
 The MVP recommendation ranking uses Pipeline~B2 curriculum-side semantic fit only. The Phase~2 target ranking blends the RIASEC-derived fit score with a behavioural fit score using a blending weight $\alpha$ that decays automatically as the student accumulates interaction data: new users start at $\alpha = 1.0$ (pure RIASEC); after 3--5 meaningful interactions $\alpha \approx 0.5$ (balanced blend); regular users converge toward $\alpha \approx 0.2$ (behaviour-dominated). Interaction signals are weighted by type: program save (1.0), TCAS guide viewed (0.8), chatbot query about a program (0.6), card expanded (0.4), card viewed (0.1).
 
-The baseline for comparison is BM25 keyword retrieval over the same มคอ.2 corpus without embedding or LLM generation. The full RIASEC-to-topic mapping is documented in Appendix~\ref{appendix:A}.
+The baseline for comparison is keyword-only \texttt{ilike} search over the same มคอ.2 corpus without embedding-based retrieval or LLM generation. The full RIASEC-to-topic mapping is documented in Appendix~\ref{appendix:A}.
 
 \subsection{Evaluation}
 \label{subsection:evaluation}
 
 \begin{itemize}[leftmargin=80pt]
-    \item \textbf{Current POC baseline (May~2026):} The current RAG POC is evaluated with custom LLM-as-judge regression tests tracked in MLflow, including TCAS, fee, alias, bilingual, and missing-data honesty checks. The v8 structured RAG run records 72.7\% good answers on the fee/TCAS regression suite and a 74\% headline retrieval benchmark. This baseline is reported honestly as POC evidence, not as final MVP success.
+    \item \textbf{Current POC baseline (May~2026):} The current RAG POC is evaluated with custom LLM-as-judge regression tests tracked in MLflow on a 0--3 scale, including TCAS, fee, alias, bilingual, and missing-data honesty checks. The selected production regression run, \texttt{v8\_structured\_tcas\_fees}, records 72.7\% good answers and an average score of 2.055/3.0 on the fee/TCAS regression suite. The headline retrieval benchmark, \texttt{latest\_submission\_headline\_v7\_rerank\_74pct}, records 74\% good answers and an average score of 2.26/3.0. RAGAS was considered but is not the primary POC metric because custom checks better capture Thai/English KU-specific correctness, structured TCAS/fee evidence, and missing-data honesty. This baseline is reported honestly as POC evidence, not as final MVP success.
 
     \item \textbf{Final MVP RAG quality:} RAGAS framework metrics \cite{es2023ragas} are added as standardized supplementary metrics for UC-04 and UC-08: Faithfulness (proportion of claims in the answer supported by retrieved context), Answer Relevancy (semantic similarity between answer and question), and Context Recall (proportion of relevant information retrieved). Target: Faithfulness $>$ 0.80, Answer Relevancy $>$ 0.75. Custom regression tests remain required for TCAS, fees, aliases, bilingual behaviour, and missing-data honesty because these behaviours are KU-specific.
 

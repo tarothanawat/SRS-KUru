@@ -1,102 +1,120 @@
-# KUru — Diagram Source
+# KUru - Diagram Source
 
-Mermaid source for all figures in the SRS. Render with any Mermaid-compatible viewer
-(VS Code Mermaid Preview, mermaid.live, etc.).
+Mermaid source for SRS diagrams. Render with a Mermaid-compatible viewer
+(VS Code Mermaid Preview, mermaid.live, or Mermaid CLI).
 
 ---
 
-## Figure 1 — System Architecture (`fig:system-architecture`)
+## Figure 1 - System Architecture (`fig:system-architecture`)
 
-> Three-tier architecture with AI layer. Corresponds to §4.1.
+> Three-tier architecture with AI/data layer. Current POC includes ingestion, RAG, and Program Explorer. MVP adds Pipeline B2 recommendation. Phase 2 adds graph/career/behavioral features.
 
 ```mermaid
 flowchart TD
     subgraph CLIENT["Client (Vercel)"]
-        FE["Next.js 14 App Router<br/>Tailwind CSS · Shadcn/UI · TypeScript"]
+        FE["Next.js 14 App Router<br/>Tailwind CSS / Shadcn UI / TypeScript"]
     end
 
     subgraph BACKEND["Backend (Railway)"]
         direction TB
         API["FastAPI"]
-        RAG["RAG Engine"]
+        RAG["RAG Engine<br/>(current POC + MVP)"]
+        EXP["Program Explorer<br/>(current POC + MVP)"]
         REC["MVP Recommendation Engine<br/>Pipeline B2 semantic curriculum matching"]
-        FUTURE_REC["Phase 2 Recommender<br/>Pipeline A + Neo4j B1 + behavioural re-ranking"]
         ING["Data Ingestion Pipeline"]
+        FUTURE_REC["Phase 2 Recommender<br/>Pipeline A + Neo4j B1 + behavioral re-ranking"]
+
         API --> RAG
+        API --> EXP
         API --> REC
-        API -.-> FUTURE_REC
         API --> ING
+        API -.-> FUTURE_REC
     end
 
     subgraph DATA["Data Layer"]
         direction LR
-        SUP[("Supabase<br/>PostgreSQL · pgvector · Auth")]
+        SUP[("Supabase<br/>PostgreSQL / pgvector / Auth")]
         NEO[("Neo4j<br/>Knowledge Graph<br/>(Phase 2)")]
     end
 
-    subgraph AI_LAYER["AI — Google"]
+    subgraph AI["AI and OCR Services"]
         direction LR
-        GEN["Gemini 2.5 Flash<br/>Generation"]
-        EMB["Gemini text-embedding-001<br/>Embeddings"]
+        GEN["Gemini 2.5 Flash Lite<br/>via OpenRouter<br/>generation"]
+        EMB["Local multilingual-E5<br/>intfloat/multilingual-e5-base<br/>embeddings"]
+        TYPHOON["Typhoon OCR<br/>low-yield PDF pages"]
+        FULL_OCR["Full scanned-PDF OCR<br/>configured Gemini/Typhoon path"]
+        EXTRACT["Gemini text mode<br/>structured extraction"]
     end
 
     subgraph SOURCES["External Data Sources"]
         direction LR
-        PDF["มคอ.2 PDFs<br/>KU Faculty"]
-        ONET["O*NET Dataset<br/>US Dept. of Labor<br/>(Phase 2)"]
-        TCAS["TCAS Admission Data<br/>KU Faculty"]
+        PDF["MKO.2 curriculum PDFs<br/>KU faculty"]
+        TCAS["TCAS admission PDFs/data<br/>KU faculty + mytcas gaps"]
+        ONET["O*NET Dataset<br/>(Phase 2)"]
     end
 
     FE -->|"REST / HTTPS"| API
-    FE -->|"Auth"| SUP
+    FE -->|"optional auth"| SUP
 
     RAG --> SUP
     RAG --> GEN
     RAG --> EMB
 
+    EXP --> SUP
+    EXP --> EMB
+
     REC --> SUP
     REC --> GEN
+    REC --> EMB
+
+    ING -->|"PyMuPDF text first"| PDF
+    ING --> TCAS
+    ING --> TYPHOON
+    ING -.-> FULL_OCR
+    ING --> EXTRACT
+    ING --> EMB
+    ING -->|"chunks + metadata + vectors"| SUP
+
     FUTURE_REC -.-> SUP
     FUTURE_REC -.-> NEO
     FUTURE_REC -.-> GEN
-
-    ING --> PDF
+    ING -.->|"PLO / Skill / Career graph"| NEO
     ING -.-> ONET
-    ING --> TCAS
-    ING -->|"embeddings + structured data"| SUP
-    ING -.->|"PLO · Skill · Career graph"| NEO
 ```
 
 ---
 
-## Figure 2 — Use Case Diagram (`fig:use-case-diagram`)
+## Figure 2 - Use Case Diagram (`fig:use-case-diagram`)
 
-> Actors: Guest and Registered User. Corresponds to §3.3.
+> Use cases separated by MVP, partial MVP, and Phase 2.
 
 ```mermaid
 flowchart LR
-    GUEST(["👤 Guest"])
-    RUSER(["👤 Registered User<br/>(extends Guest)"])
+    GUEST(["Guest"])
+    RUSER(["Registered User<br/>(extends Guest)"])
 
-    subgraph GUEST_UC["Available to all users"]
+    subgraph MVP_UC["Evaluated MVP"]
         UC01["UC-01<br/>Discover Interests"]
-        UC02["UC-02<br/>View Program Recommendations"]
-        UC03["UC-03<br/>Explore PLO Spider Chart"]
-        UC04["UC-04<br/>Query Curriculum Chatbot"]
-        UC05["UC-05<br/>View TCAS Admission Guide"]
-        UC06["UC-06<br/>Explore Career Paths<br/>(Phase 2)"]
+        UC02["UC-02<br/>View Program Recommendations<br/>(Pipeline B2 only)"]
+        UC04["UC-04<br/>Query KUru Advisor / RAG"]
         UC08["UC-08<br/>Explain Why Recommended"]
         UC09["UC-09<br/>Search Programs Semantically"]
-        UC10["UC-10<br/>Pin Programs & Compare<br/>(Phase 2)"]
-        UC11["UC-11<br/>View Curriculum Timeline<br/>(Phase 2)"]
-        UC12["UC-12<br/>Portfolio Readiness Check<br/>(Phase 2)"]
     end
 
-    subgraph REG_UC["Registered users only"]
-        UC07["UC-07<br/>Refine Profile via Implicit Signals<br/>(Phase 2)"]
-        DASH["Save Profile & Bookmark Programs<br/>(Phase 2)"]
-        TRACK["Track TCAS Deadlines<br/>(Phase 2)"]
-        RESET["Reset Interest Profile"]
+    subgraph PARTIAL_UC["Partial MVP"]
+        UC03["UC-03<br/>Explore PLO Chart<br/>(static only)"]
+        UC05["UC-05<br/>TCAS Admission Guide<br/>(program detail + chatbot only)"]
+    end
+
+    subgraph PHASE2_UC["Phase 2 / Target System"]
+        UC06["UC-06<br/>Explore Career Paths"]
+        UC07["UC-07<br/>Behavioral Blending"]
+        UC10["UC-10<br/>Pin Programs and Compare"]
+        UC11["UC-11<br/>Curriculum Timeline"]
+        UC12["UC-12<br/>Portfolio Readiness Check"]
+        DASH["Saved Profile Dashboard"]
+        TRACK["TCAS Deadline Tracker"]
+        RESET["Persistent Reset / Saved Profile Controls"]
     end
 
     GUEST --> UC01
@@ -104,123 +122,123 @@ flowchart LR
     GUEST --> UC03
     GUEST --> UC04
     GUEST --> UC05
-    GUEST --> UC06
     GUEST --> UC08
     GUEST --> UC09
-    GUEST --> UC10
-    GUEST --> UC11
-    GUEST --> UC12
+    GUEST -.-> UC06
+    GUEST -.-> UC10
+    GUEST -.-> UC11
+    GUEST -.-> UC12
 
-    RUSER -->|inherits| GUEST
-    RUSER --> UC07
-    RUSER --> DASH
-    RUSER --> TRACK
-    RUSER --> RESET
+    RUSER -->|"inherits"| GUEST
+    RUSER -.-> UC07
+    RUSER -.-> DASH
+    RUSER -.-> TRACK
+    RUSER -.-> RESET
 
-    UC01 -->|"produces RIASEC vector"| UC02
+    UC01 -->|"RIASEC vector"| UC02
     UC02 -->|"select program"| UC03
-    UC02 -.->|"Phase 2 career link"| UC06
     UC02 -->|"tap why?"| UC08
-    UC10 -.->|"Phase 2 batch check"| UC12
+    UC02 -.->|"career link in Phase 2"| UC06
+    UC10 -.->|"batch portfolio check in Phase 2"| UC12
 ```
 
 ---
 
-## Figure 3A — MVP Recommendation Pipeline (`fig:mvp-recommendation-pipeline`)
+## Figure 3A - MVP Recommendation Pipeline (`fig:mvp-recommendation-pipeline`)
 
-> Evaluated MVP flow. RIASEC is converted into curriculum search intent, then matched against indexed program/PLO/course chunks. This should replace the old recommendation diagram as the primary diagram in §4.2.2.
+> Evaluated MVP flow. RIASEC becomes curriculum search intent, then matches indexed program/PLO/course chunks. No O*NET, Neo4j B1, or behavioral re-ranking in MVP.
 
 ```mermaid
 flowchart TD
     START(["Student completes<br/>RIASEC interest discovery"])
 
     subgraph PROFILE["1. Build Interest Profile"]
-        VEC["6D RIASEC vector<br/>R, I, A, S, E, C"]
-        TOP["Top dimensions / Holland code<br/>e.g., Investigative + Realistic"]
+        VEC["6D RIASEC vector<br/>R / I / A / S / E / C"]
+        TOP["Top dimensions / Holland code<br/>example: Investigative + Realistic"]
         START --> VEC --> TOP
     end
 
     subgraph INTENT["2. Convert RIASEC to Curriculum Search Intent"]
-        THEMES["Map top dimensions to interest themes<br/>analysis, problem solving,<br/>systems, technical design,<br/>experiments, hands-on work"]
-        QUERY["Create semantic query<br/>from themes + student answers"]
+        THEMES["Map dimensions to interest themes<br/>analysis, systems, design,<br/>experiments, hands-on work"]
+        QUERY["Create semantic query<br/>from themes + answers"]
         TOP --> THEMES --> QUERY
     end
 
     subgraph RETRIEVAL["3. Pipeline B2: Semantic Curriculum Matching"]
-        EMB["Gemini text-embedding-001<br/>embed semantic query"]
+        EMB["Local multilingual-E5<br/>embed semantic query"]
         PGV[("Supabase pgvector<br/>program + PLO + course chunks")]
-        CHUNKS["Retrieve top matching chunks<br/>with program_id and source metadata"]
+        CHUNKS["Retrieve matching chunks<br/>with program_id + source metadata"]
         QUERY --> EMB --> PGV --> CHUNKS
     end
 
     subgraph SCORING["4. Program Scoring"]
-        GROUP["Group retrieved chunks<br/>by program"]
-        SCORE["Compute curriculum-fit score<br/>top-k similarity average<br/>+ section/source weighting<br/>+ coverage of interest themes"]
+        GROUP["Group chunks by program"]
+        SCORE["Compute curriculum-fit score<br/>top-k similarity average<br/>+ section weighting<br/>+ theme coverage"]
         RANK["Rank programs by score"]
         CHUNKS --> GROUP --> SCORE --> RANK
     end
 
     subgraph EXPLAIN["5. Evidence-Grounded Explanation"]
-        EVIDENCE["Select strongest curriculum evidence<br/>PLOs, course descriptions,<br/>projects, labs, admission info if relevant"]
-        GEMINI["Gemini 2.5 Flash<br/>generate explanation only from evidence"]
-        CARDS["Ranked program cards<br/>with why-this-matches explanation"]
+        EVIDENCE["Select strongest evidence<br/>PLOs, course descriptions,<br/>projects, labs, admission info if relevant"]
+        GEMINI["Gemini 2.5 Flash Lite<br/>via OpenRouter<br/>explain only from evidence"]
+        CARDS["Ranked program cards<br/>with explanation"]
         RANK --> EVIDENCE --> GEMINI --> CARDS
     end
 
-    NOTE["MVP evaluation checks short-term relevance:<br/>advisor/senior-student labels, curriculum evidence,<br/>MRR, NDCG@5, explanation faithfulness.<br/>It does not claim 4-year satisfaction."]
+    NOTE["MVP evaluation: short-term relevance<br/>advisor/senior-student labels,<br/>curriculum evidence, MRR, NDCG@5,<br/>explanation faithfulness.<br/>No 4-year satisfaction claim."]
     CARDS --> NOTE
 ```
 
 ---
 
-## Figure 3B — Phase 2 Target-System Recommendation Pipeline (`fig:recommendation-pipeline`)
+## Figure 3B - Phase 2 Target-System Recommendation Pipeline (`fig:recommendation-pipeline`)
 
-> Five-stage pipeline with two parallel signals. This is the Phase~2 target-system design, not the evaluated MVP flow.
+> Five-stage target-system design. This is not the evaluated MVP flow.
 
 ```mermaid
 flowchart TD
     START(["Student completes<br/>Interest Discovery"])
 
-    subgraph STAGE1["Stage 1 — RIASEC Vector Construction"]
-        S1["Apply topic-to-RIASEC weights<br/>+ pairwise adjustments<br/>+ dealbreaker filter<br/>+ confidence scaling<br/>→ L2-normalise to unit vector"]
+    subgraph STAGE1["Stage 1 - RIASEC Vector Construction"]
+        S1["Likert scores + confidence scalar<br/>+ pairwise adjustments<br/>+ scenario adjustments<br/>+ dealbreaker filter<br/>then L2-normalise"]
     end
 
-    subgraph STAGE2["Stage 2 — Parallel Signal Computation"]
+    subgraph STAGE2["Stage 2 - Parallel Signal Computation"]
         direction LR
 
-        subgraph PIPEA["Pipeline A — Career-side"]
-            A1["Cosine similarity:<br/>RIASEC vector vs.<br/>O*NET occupation profiles<br/>(Supabase pgvector)"]
-            A2["Top 10–15 occupations<br/>form internal career space<br/>(top 7 shown in Career Explorer)"]
-            A3["A-score per KU program<br/>via career–program alignment"]
+        subgraph PIPEA["Pipeline A - Career-side"]
+            A1["RIASEC vector vs.<br/>O*NET occupation profiles"]
+            A2["Top 10-15 occupations<br/>internal career space"]
+            A3["A-score per KU program<br/>via career-program alignment"]
             A1 --> A2 --> A3
         end
 
-        subgraph PIPEB["Pipeline B — Curriculum-side"]
-            B1["B1 — Neo4j PLO match<br/>RIASEC → SkillCluster weights<br/>vs. program PLO profiles<br/>(cosine similarity)"]
-            B2["B2 — Semantic course match<br/>Interest query vs.<br/>course description embeddings<br/>(Supabase pgvector)"]
-            BC["B-score = 0.4 × B1 + 0.6 × B2"]
+        subgraph PIPEB["Pipeline B - Curriculum-side"]
+            B1["B1 - Neo4j PLO match<br/>RIASEC to SkillCluster weights<br/>vs. program PLO profiles"]
+            B2["B2 - Semantic course match<br/>interest query vs. course chunks<br/>in Supabase pgvector"]
+            BC["B-score = 0.4 * B1 + 0.6 * B2"]
             B1 --> BC
             B2 --> BC
         end
     end
 
-    subgraph STAGE3["Stage 3 — Score Synthesis"]
-        S3["Final score = 0.35 × A-score + 0.65 × B-score<br/>Programs ranked; top-N selected for display"]
+    subgraph STAGE3["Stage 3 - Score Synthesis"]
+        S3["Final score = 0.35 * A-score + 0.65 * B-score<br/>Programs ranked; top-N displayed"]
     end
 
-    subgraph STAGE4["Stage 4 — Explanation Generation"]
-        S4["Gemini 2.5 Flash generates<br/>plain-language explanation per program<br/>grounded in Pipeline A + B evidence<br/>(Thai or English)"]
+    subgraph STAGE4["Stage 4 - Explanation Generation"]
+        S4["Gemini 2.5 Flash Lite explains<br/>from Pipeline A + B evidence"]
     end
 
-    subgraph STAGE5["Stage 5 — Behavioural Re-ranking (Registered Users)"]
-        S5A{"Sufficient<br/>interaction data?"}
-        S5B["Blend: α × pipeline score<br/>+ (1−α) × behavioural fit<br/>α decays 1.0 → 0.2<br/>as interactions accumulate"]
-        S5C["Pure pipeline score<br/>(α = 1.0)"]
+    subgraph STAGE5["Stage 5 - Behavioral Re-ranking"]
+        S5A{"Enough interaction data?"}
+        S5B["Blend alpha * pipeline score<br/>+ (1-alpha) * behavioral fit<br/>alpha decays 1.0 to 0.2"]
+        S5C["Pure pipeline score<br/>(alpha = 1.0)"]
         S5A -->|"Yes"| S5B
         S5A -->|"No / Guest"| S5C
     end
 
-    RESULT(["Ranked program cards<br/>displayed to student"])
+    RESULT(["Ranked program cards"])
 
     START --> STAGE1
     STAGE1 --> STAGE2
@@ -234,87 +252,85 @@ flowchart TD
 
 ---
 
-## Figure 4 — RAG Pipeline Sequence (`fig:rag-pipeline`)
+## Figure 4 - RAG Pipeline Sequence (`fig:rag-pipeline`)
 
-> Query flow for the Curriculum Chatbot. Corresponds to §4.2.1.
-> (No current placeholder in the LaTeX — consider adding one to §4.2.1.)
+> Current MVP/POC query flow for the KUru Advisor chatbot.
 
 ```mermaid
 sequenceDiagram
     actor Student
     participant FE as Next.js Frontend
     participant API as FastAPI Backend
-    participant EMB as Gemini Embeddings
+    participant EMB as Local E5 Embedder
     participant PGV as Supabase pgvector
-    participant LLM as Gemini 2.5 Flash
+    participant LLM as Gemini 2.5 Flash Lite
 
     Student->>FE: Enter question (Thai or English)
-    FE->>API: POST /chat {query, history, program_ids?}
+    FE->>API: POST /chat {query, history, program_id?}
     API->>EMB: embed(query)
     EMB-->>API: query_vector
-    API->>PGV: cosine_search(query_vector, top_k=5)
-    PGV-->>API: [chunk_1 … chunk_k] with source metadata
+    API->>PGV: cosine_search(query_vector, top_k=5, min_similarity=0.35)
+    PGV-->>API: chunks with source metadata
     API->>LLM: prompt(query, chunks, history, cite_instruction)
     LLM-->>API: grounded answer + inline citations
-    API-->>FE: {answer, citations: [{doc, section, page}]}
-    FE-->>Student: Answer with มคอ.2 source badges
+    API-->>FE: answer + citations(source_file, section_type, similarity)
+    FE-->>Student: answer with provenance chips
+    Note over FE,Student: Current chips are not clickable;<br/>chunk preview / PDF-page opening is Phase 2
 
     alt No relevant chunks found
         PGV-->>API: empty result
-        API-->>FE: "ไม่พบข้อมูลนี้ในเอกสารหลักสูตร"
-        FE-->>Student: Fallback message
+        API-->>FE: "This information was not found in the curriculum document."
+        FE-->>Student: fallback message
     end
 ```
 
 ---
 
-## Figure 5 — Interest Elicitation Flow (`fig:elicitation-flow`)
+## Figure 5 - Interest Elicitation Flow (`fig:elicitation-flow`)
 
-> UC-01 adaptive 11-step process. Export as `assets/diagrams/elicitation-flow.png`.
-> Corresponds to §4.2.3.
+> UC-01 adaptive 12-step process.
 
 ```mermaid
 flowchart TD
-    START(["Student opens ค้นหาความสนใจ"])
+    START(["Student opens interest discovery"])
 
-    subgraph LIKERT["Steps 1–6 — Likert Screens"]
-        L["One screen per RIASEC dimension<br/>(R → I → A → S → E → C)<br/>4 statements × 5-point scale<br/>Raw score per dimension: max 20<br/>Progress bar: Step 1–6 of 11"]
+    subgraph LIKERT["Steps 1-6 - Likert Screens"]
+        L["One screen per RIASEC dimension<br/>R -> I -> A -> S -> E -> C<br/>4 statements x 5-point scale<br/>Raw score per dimension: max 20<br/>Progress bar: Step 1-6 of 12"]
     end
 
-    subgraph CONFIDENCE["Step 7 — Confidence Check"]
-        C["คุณรู้สึกมั่นใจแค่ไหนกับคำตอบที่เพิ่งเลือก?"]
-        C1["มั่นใจมาก → scalar 1.0"]
-        C2["ค่อนข้างมั่นใจ → scalar 0.75"]
-        C3["ไม่แน่ใจเลย → scalar 0.5"]
+    subgraph CONFIDENCE["Step 7 - Confidence Check"]
+        C["How confident are you<br/>in your answers?"]
+        C1["Very confident -> scalar 1.0"]
+        C2["Somewhat confident -> scalar 0.75"]
+        C3["Not sure -> scalar 0.5"]
         C --> C1 & C2 & C3
         C1 & C2 & C3 --> SCALED["Apply scalar to all 6 dimension scores"]
     end
 
-    DELTA["Compute delta for each dimension pair<br/>|score_A − score_B| for all 15 pairs"]
-
+    DELTA["Compute delta for dimension pairs<br/>abs(score_A - score_B)"]
     AMBIG{"Any pair<br/>with delta < 3?"}
 
-    subgraph PAIRWISE["Step 8 — Adaptive Pairwise (conditional)"]
-        P["Show forced-choice questions<br/>for ambiguous pairs only<br/>(max 4–6 pairs)<br/>Each pair offers 'ชอบเท่ากัน' as middle choice<br/>Responses adjust dimension scores"]
+    subgraph PAIRWISE["Step 8 - Adaptive Pairwise"]
+        P["Show forced-choice questions<br/>for ambiguous pairs only<br/>max 4-6 pairs<br/>responses adjust scores"]
     end
 
-    subgraph SCENARIOS["Steps 9–11 — Scenario Questions"]
-        S["3 scenarios presented sequentially<br/>Each offers A–F role options<br/>mapped to R/I/A/S/E/C<br/>Student selects one preferred role<br/>Responses adjust dimension scores proportionally"]
+    subgraph SCENARIOS["Steps 9-11 - Scenario Questions"]
+        S["3 scenarios<br/>A-F role options mapped to RIASEC<br/>responses adjust scores"]
     end
 
-    subgraph SUMMARY["Step 11 — Profile Summary + Dealbreaker Filter"]
-        SUM["Display:<br/>• Top 2 dominant dimensions<br/>• Bar chart of all 6 scores (out of 20)<br/>• Holland Code label"]
-        DB["มีสาขาไหนที่คุณไม่อยากเรียนเลย?<br/>6 dimension chips — tap to exclude<br/>'ไม่มี ข้ามได้เลย' prominently shown"]
-        EXCL{"Any dimensions<br/>excluded?"}
+    subgraph SUMMARY["Step 12 - Profile Summary + Dealbreaker Filter"]
+        SUM["Display top 2 dimensions,<br/>score bars, and Holland code"]
+        DB["Optional dealbreaker filter<br/>tap dimensions to exclude"]
+        EXCL{"Any dimensions excluded?"}
         ZERO["Zero out excluded dimensions"]
-        KEEP["Continue with current scores"]
+        KEEP["Keep current scores"]
         SUM --> DB --> EXCL
         EXCL -->|"Yes"| ZERO
         EXCL -->|"No"| KEEP
     end
 
-    NORM["L2-normalise 6-dimensional vector"]
-    OUTPUT(["RIASEC vector output<br/>MVP → Pipeline B2 semantic curriculum matching<br/>Phase 2 → Pipeline A + Neo4j B1"])
+    NORM["L2-normalise 6D vector"]
+    OUTPUT(["RIASEC vector output<br/>MVP -> Pipeline B2<br/>Phase 2 -> Pipeline A + Neo4j B1"])
 
     START --> LIKERT
     LIKERT --> CONFIDENCE
@@ -331,16 +347,16 @@ flowchart TD
 
 ---
 
-## Figure 6 — Domain Model (`fig:domain-model`)
+## Figure 6 - Domain Model (`fig:domain-model`)
 
-> Core business entities and relationships. Corresponds to §4.1.
+> Core business entities. Phase 2 entities and relationships are explicitly labelled.
 
 ```mermaid
 classDiagram
     class Student {
         +student_id : uuid
         +language_pref : th|en
-        +alpha : float
+        +alpha : float (Phase 2)
     }
     class RIASECProfile {
         +R I A S E C : float
@@ -365,17 +381,6 @@ classDiagram
         +description_en : string
         +domain : string
     }
-    class SkillCluster {
-        +cluster_id : string
-        +name : string
-        +riasec_weights : float[]
-    }
-    class Career {
-        +onet_code : string
-        +title_en : string
-        +title_th : string
-        +riasec_profile : float[]
-    }
     class Course {
         +course_code : string
         +title_th : string
@@ -389,32 +394,44 @@ classDiagram
         +gpax_min : float
         +deadline : date
     }
+    class SkillCluster {
+        <<Phase 2>>
+        +cluster_id : string
+        +name : string
+        +riasec_weights : float[]
+    }
+    class Career {
+        <<Phase 2>>
+        +onet_code : string
+        +title_en : string
+        +title_th : string
+        +riasec_profile : float[]
+    }
     class InteractionLog {
+        <<Phase 2>>
         +interaction_type : string
         +weight : float
         +timestamp : timestamp
     }
     class PortfolioCriteria {
+        <<Phase 2>>
         +round : int
         +required_items : json
         +preferred_items : json
     }
 
     Student "1" --> "1" RIASECProfile : has
-    Student "1" --> "*" InteractionLog : generates
-    Student "*" --> "*" Program : saves
-    InteractionLog "*" --> "1" Program : about
-
     Program "*" --> "1" Faculty : belongs to
     Program "1" --> "*" Course : contains
     Program "1" --> "*" TCASRecord : has admission via
-
     Faculty "1" --> "*" PLO : defines
-    Faculty "1" --> "*" PortfolioCriteria : publishes
 
-    PLO "*" --> "*" SkillCluster : develops
-    Career "*" --> "*" SkillCluster : requires
-
-    RIASECProfile ..> Career : matched against (Pipeline A)
-    RIASECProfile ..> SkillCluster : converted to weights (Pipeline B1)
+    Student "1" --> "*" InteractionLog : generates (Phase 2)
+    Student "*" --> "*" Program : saves (Phase 2)
+    InteractionLog "*" --> "1" Program : about (Phase 2)
+    Faculty "1" --> "*" PortfolioCriteria : publishes (Phase 2)
+    PLO "*" --> "*" SkillCluster : develops (Phase 2)
+    Career "*" --> "*" SkillCluster : requires (Phase 2)
+    RIASECProfile ..> Career : Pipeline A (Phase 2)
+    RIASECProfile ..> SkillCluster : Pipeline B1 (Phase 2)
 ```

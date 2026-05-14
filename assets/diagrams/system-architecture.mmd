@@ -1,0 +1,70 @@
+flowchart TD
+    subgraph CLIENT["Client (Vercel)"]
+        FE["Next.js 14 App Router<br/>Tailwind CSS / Shadcn UI / TypeScript"]
+    end
+
+    subgraph BACKEND["Backend (Railway)"]
+        direction TB
+        API["FastAPI"]
+        RAG["RAG Engine<br/>(current POC + MVP)"]
+        EXP["Program Explorer<br/>(current POC + MVP)"]
+        REC["MVP Recommendation Engine<br/>Pipeline B2 semantic curriculum matching"]
+        ING["Data Ingestion Pipeline"]
+        FUTURE_REC["Phase 2 Recommender<br/>Pipeline A + Neo4j B1 + behavioral re-ranking"]
+
+        API --> RAG
+        API --> EXP
+        API --> REC
+        API --> ING
+        API -.-> FUTURE_REC
+    end
+
+    subgraph DATA["Data Layer"]
+        direction LR
+        SUP[("Supabase<br/>PostgreSQL / pgvector / Auth")]
+        NEO[("Neo4j<br/>Knowledge Graph<br/>(Phase 2)")]
+    end
+
+    subgraph AI["AI and OCR Services"]
+        direction LR
+        GEN["Gemini 2.5 Flash Lite<br/>via OpenRouter<br/>generation"]
+        EMB["Local multilingual-E5<br/>intfloat/multilingual-e5-base<br/>embeddings"]
+        TYPHOON["Typhoon OCR<br/>low-yield PDF pages"]
+        FULL_OCR["Full scanned-PDF OCR<br/>configured Gemini/Typhoon path"]
+        EXTRACT["Gemini text mode<br/>structured extraction"]
+    end
+
+    subgraph SOURCES["External Data Sources"]
+        direction LR
+        PDF["MKO.2 curriculum PDFs<br/>KU faculty"]
+        TCAS["TCAS admission PDFs/data<br/>KU faculty + mytcas gaps"]
+        ONET["O*NET Dataset<br/>(Phase 2)"]
+    end
+
+    FE -->|"REST / HTTPS"| API
+    FE -->|"optional auth"| SUP
+
+    RAG --> SUP
+    RAG --> GEN
+    RAG --> EMB
+
+    EXP --> SUP
+    EXP --> EMB
+
+    REC --> SUP
+    REC --> GEN
+    REC --> EMB
+
+    ING -->|"PyMuPDF text first"| PDF
+    ING --> TCAS
+    ING --> TYPHOON
+    ING -.-> FULL_OCR
+    ING --> EXTRACT
+    ING --> EMB
+    ING -->|"chunks + metadata + vectors"| SUP
+
+    FUTURE_REC -.-> SUP
+    FUTURE_REC -.-> NEO
+    FUTURE_REC -.-> GEN
+    ING -.->|"PLO / Skill / Career graph"| NEO
+    ING -.-> ONET

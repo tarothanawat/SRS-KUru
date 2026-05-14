@@ -6,9 +6,9 @@
 \contentsline {figure}{\numberline {3.5}{\ignorespaces Program explorer --- grid of program cards with available curriculum, faculty, and TCAS metadata. The search bar supports natural language queries in Thai and English.}}{35}{figure.3.5}%
 \contentsline {figure}{\numberline {3.6}{\ignorespaces KUru Advisor chat interface --- the student asks ``What is CPE?'' and receives a grounded answer about Computer Engineering TCAS Round~3 requirements with source citations.}}{36}{figure.3.6}%
 \contentsline {figure}{\numberline {3.7}{\ignorespaces Portfolio Coach Phase~2 mockup: (left) document upload screen accepting portfolio PDFs and transcript images; (right) analysis results showing a readiness score and criteria checklist.}}{37}{figure.3.7}%
-\contentsline {figure}{\numberline {4.1}{\ignorespaces KUru System Architecture}}{41}{figure.4.1}%
-\contentsline {figure}{\numberline {4.2}{\ignorespaces KUru Domain Model}}{42}{figure.4.2}%
-\contentsline {figure}{\numberline {4.3}{\ignorespaces RAG Pipeline Sequence}}{44}{figure.4.3}%
-\contentsline {figure}{\numberline {4.4}{\ignorespaces MVP Recommendation Pipeline: RIASEC-to-Curriculum Semantic Matching}}{44}{figure.4.4}%
-\contentsline {figure}{\numberline {4.5}{\ignorespaces Phase~2 Target-System Recommendation Pipeline --- Five Stages with Two Parallel Signals}}{47}{figure.4.5}%
-\contentsline {figure}{\numberline {4.6}{\ignorespaces Interest Elicitation Flow (UC-01) — 12-Step Adaptive Process}}{49}{figure.4.6}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces KUru System Architecture}}{51}{figure.4.1}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces KUru Domain Model}}{52}{figure.4.2}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces RAG Pipeline Sequence}}{53}{figure.4.3}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces MVP Recommendation Pipeline: RIASEC-to-Curriculum Semantic Matching}}{53}{figure.4.4}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Phase~2 Target-System Recommendation Pipeline --- Five Stages with Two Parallel Signals}}{54}{figure.4.5}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces Interest Elicitation Flow (UC-01) — 12-Step Adaptive Process}}{55}{figure.4.6}%

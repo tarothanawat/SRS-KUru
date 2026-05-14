@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999998 (MiKTeX 26.2) (preloaded format=xelatex 2026.3.22)  14 MAY 2026 15:45
+This is XeTeX, Version 3.141592653-2.6-0.999998 (MiKTeX 26.2) (preloaded format=xelatex 2026.3.22)  14 MAY 2026 19:46
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1192,6 +1192,54 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
 
+Underfull \hbox (badness 3668) in paragraph at lines 65--66
+\TU/TimesNewRoman(0)/m/n/14.4 tent, frontend/backend integration, and MLflow-ba
+cked evaluation.
+ []
+
+
+Underfull \hbox (badness 3942) in paragraph at lines 65--66
+\TU/TimesNewRoman(0)/m/n/14.4 records 72.7% good answers and an average score o
+f 2.055/3.0
+ []
+
+
+Underfull \hbox (badness 2401) in paragraph at lines 65--66
+\TU/TimesNewRoman(0)/m/n/14.4 on the fee/TCAS regression suite. The headline re
+trieval bench-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 65--66
+\TU/TimesNewRoman(0)/m/n/14.4 mark, \TU/lmtt/m/n/14.4 latest_submission_headlin
+e_v7_rerank_74pct\TU/TimesNewRoman(0)/m/n/14.4 , records
+ []
+
+
+Underfull \hbox (badness 2671) in paragraph at lines 65--66
+\TU/TimesNewRoman(0)/m/n/14.4 74% good answers and an average score of 2.26/3.0
+. The cur-
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 65--66
+\TU/TimesNewRoman(0)/m/n/14.4 rent retrieval configuration uses Supabase pgvect
+or with local
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 65--66
+\TU/lmtt/m/n/14.4 intfloat/multilingual-e5-base \TU/TimesNewRoman(0)/m/n/14.4 e
+mbeddings, \TU/lmtt/m/n/14.4 top_k = 5\TU/TimesNewRoman(0)/m/n/14.4 ,
+ []
+
+
+Underfull \hbox (badness 3792) in paragraph at lines 65--66
+\TU/lmtt/m/n/14.4 min_similarity = 0.35\TU/TimesNewRoman(0)/m/n/14.4 , and \TU/
+lmtt/m/n/14.4 fetch_multiplier = 3\TU/TimesNewRoman(0)/m/n/14.4 . Known
+ []
+
+
 Underfull \vbox (badness 10000) has occurred while \output is active []
 
  [3]
@@ -1218,13 +1266,12 @@ Underfull \hbox (badness 1292) in paragraph at lines 79--80
 .4 RAG-powered Q&A interface
  []
 
-[6]
+[6] [7]
 Underfull \hbox (badness 1097) in paragraph at lines 100--101
 []\TU/TimesNewRoman(0)/b/n/14.4 Prospective KU applicants (pre-admission): \TU/
 TimesNewRoman(0)/m/n/14.4 Anyone
  []
 
-[7]
 
 LaTeX Warning: Float too large for page by 43.87434pt on input line 140.
 
@@ -1354,18 +1401,27 @@ Underfull \hbox (badness 1281) in paragraph at lines 55--56
 simplified
  []
 
-[40] [41] [42] [43] [44] [45]
+
+Underfull \vbox (badness 7433) has occurred while \output is active []
+
+ [40]
+[41]
+Underfull \vbox (badness 1502) has occurred while \output is active []
+
+ [42]
 File: ./assets/diagrams/recommendation-pipeline.png Graphic file (type bmp)
 <./assets/diagrams/recommendation-pipeline.png>
+
+[43]
 File: ./assets/diagrams/elicitation-flow.png Graphic file (type bmp)
 <./assets/diagrams/elicitation-flow.png>
- [46] [47]
+ [44]
 Underfull \hbox (badness 2035) in paragraph at lines 128--129
 \TU/TimesNewRoman(0)/m/n/14.4 may contain admission records for multiple progra
 ms
  []
 
-[48] [49] [50]
+[45]
 Underfull \hbox (badness 3364) in paragraph at lines 142--143
 \TU/TimesNewRoman(0)/m/n/14.4 Pages with very low text yield are rendered to im
 -
@@ -1383,7 +1439,7 @@ Underfull \hbox (badness 2922) in paragraph at lines 142--143
 -2.5-flash\TU/TimesNewRoman(0)/m/n/14.4 , or Ty-
  []
 
-[51]
+[46]
 Underfull \hbox (badness 10000) in paragraph at lines 146--147
 []\TU/TimesNewRoman(0)/b/n/14.4 Structured extraction. \TU/TimesNewRoman(0)/m/n
 /14.4 After text ex-
@@ -1423,11 +1479,43 @@ Underfull \hbox (badness 1360) in paragraph at lines 148--149
 TU/TimesNewRoman(0)/m/n/14.4 ) to embed chunks
  []
 
-[52]
-Underfull \vbox (badness 10000) has occurred while \output is active []
+[47] [48]
+Underfull \hbox (badness 3439) in paragraph at lines 172--173
+\TU/TimesNewRoman(0)/m/n/14.4 POC is evaluated with custom LLM-as-judge regres-
 
- [53]
-[54]) [55]
+ []
+
+
+Underfull \hbox (badness 1546) in paragraph at lines 172--173
+\TU/TimesNewRoman(0)/m/n/14.4 sion tests tracked in MLflow on a 0–3 scale, incl
+ud-
+ []
+
+
+Underfull \hbox (badness 1852) in paragraph at lines 172--173
+\TU/TimesNewRoman(0)/m/n/14.4 esty checks. The selected production regression r
+un,
+ []
+
+
+Underfull \hbox (badness 3780) in paragraph at lines 172--173
+\TU/lmtt/m/n/14.4 v8_structured_tcas_fees\TU/TimesNewRoman(0)/m/n/14.4 , record
+s 72.7% good an-
+ []
+
+
+Underfull \hbox (badness 4303) in paragraph at lines 172--173
+\TU/TimesNewRoman(0)/m/n/14.4 regression suite. The headline retrieval benchmar
+k,
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 172--173
+\TU/lmtt/m/n/14.4 latest_submission_headline_v7_rerank_74pct\TU/TimesNewRoman(0
+)/m/n/14.4 ,
+ []
+
+[49]) [50] [51] [52] [53] [54] [55]
 \openout2 = `body/softwaredevelopment.aux'.
 
  (body/softwaredevelopment.tex
@@ -1476,6 +1564,6 @@ Here is how much of TeX's memory you used:
  46412 multiletter control sequences out of 15000+600000
  635694 words of font info for 119 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 73i,12n,112p,1575b,533s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 73i,12n,112p,1599b,537s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
 Output written on document.pdf (73 pages).

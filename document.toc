@@ -9,7 +9,7 @@
 \contentsline {section}{\numberline {1.5}MVP Scope Boundary}{3}{section.1.5}%
 \contentsline {section}{\numberline {1.6}Current POC Baseline}{5}{section.1.6}%
 \contentsline {subsection}{\numberline {1.6.1}Features}{5}{subsection.1.6.1}%
-\contentsline {section}{\numberline {1.7}Target Users}{7}{section.1.7}%
+\contentsline {section}{\numberline {1.7}Target Users}{8}{section.1.7}%
 \contentsline {section}{\numberline {1.8}Terminology}{8}{section.1.8}%
 \contentsline {chapter}{Chapter \hbox to\@tempdima {2\hfil }\leftprotrusion Literature Review and Related Work}{10}{chapter.2}%
 \contentsline {section}{\numberline {2.1}Competitor Analysis}{10}{section.2.1}%
@@ -49,12 +49,12 @@
 \contentsline {subsection}{\numberline {4.1.2}Target-System Architecture}{39}{subsection.4.1.2}%
 \contentsline {section}{\numberline {4.2}Software Design}{40}{section.4.2}%
 \contentsline {subsection}{\numberline {4.2.1}RAG Pipeline Sequence}{40}{subsection.4.2.1}%
-\contentsline {subsection}{\numberline {4.2.2}Recommendation Pipeline Sequence}{40}{subsection.4.2.2}%
-\contentsline {subsection}{\numberline {4.2.3}Interest Elicitation Flow}{46}{subsection.4.2.3}%
-\contentsline {section}{\numberline {4.3}AI and Data Design}{48}{section.4.3}%
-\contentsline {subsection}{\numberline {4.3.1}Data Sources and Collection}{48}{subsection.4.3.1}%
-\contentsline {subsection}{\numberline {4.3.2}Model Design}{52}{subsection.4.3.2}%
-\contentsline {subsection}{\numberline {4.3.3}Evaluation}{54}{subsection.4.3.3}%
+\contentsline {subsection}{\numberline {4.2.2}Recommendation Pipeline Sequence}{41}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Interest Elicitation Flow}{44}{subsection.4.2.3}%
+\contentsline {section}{\numberline {4.3}AI and Data Design}{44}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Data Sources and Collection}{44}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}Model Design}{48}{subsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.3.3}Evaluation}{49}{subsection.4.3.3}%
 \contentsline {chapter}{Chapter \hbox to\@tempdima {5\hfil }\leftprotrusion Software Development}{56}{chapter.5}%
 \contentsline {section}{\numberline {5.1}Schedule}{56}{section.5.1}%
 \contentsline {chapter}{Appendix A: RIASEC Elicitation Question Bank and Scoring Logic}{62}{chapter*.16}%
